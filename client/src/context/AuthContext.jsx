@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import api from '../services/api.js';
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
@@ -31,10 +32,20 @@ export function AuthProvider({ children }) {
 
     async function checkAuth() {
       const token = localStorage.getItem('civicpulse_token');
+      const savedUser = localStorage.getItem('civicpulse_user');
 
       if (!token) {
         if (active) {
           setUser(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      // Preserve demo login sessions on Netlify / static deployment
+      if (token.startsWith('demo-') || savedUser?.includes('civicpulse.demo')) {
+        if (active) {
+          setUser(savedUser ? JSON.parse(savedUser) : null);
           setLoading(false);
         }
         return;
@@ -53,9 +64,13 @@ export function AuthProvider({ children }) {
       } catch (error) {
         if (!active) return;
 
-        localStorage.removeItem('civicpulse_token');
-        localStorage.removeItem('civicpulse_user');
-        setUser(null);
+        if (savedUser && savedUser.includes('civicpulse.demo')) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          localStorage.removeItem('civicpulse_token');
+          localStorage.removeItem('civicpulse_user');
+          setUser(null);
+        }
       } finally {
         if (active) {
           setLoading(false);
