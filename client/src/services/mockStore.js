@@ -209,6 +209,25 @@ export function handleMockRequest(url, method = 'GET', body = null) {
     };
   }
 
+  // Auth Google OAuth Callback
+  if (cleanUrl.startsWith('/auth/google')) {
+    const role = body?.role || localStorage.getItem('pending_login_role') || 'citizen';
+    const googleUser = {
+      _id: 'usr_google_demo_' + Date.now(),
+      name: 'Google User',
+      email: 'user@google.com',
+      role: role,
+      city: 'Chennai'
+    };
+    return {
+      status: 200,
+      data: {
+        token: 'demo-jwt-google-' + role,
+        user: googleUser
+      }
+    };
+  }
+
   // Complaints
   if (cleanUrl === '/complaints' || cleanUrl.startsWith('/complaints?')) {
     const complaints = getStoredComplaints();
