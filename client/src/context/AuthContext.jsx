@@ -7,7 +7,7 @@ import {
 } from 'react';
 
 import api from '../services/api.js';
-import { supabase } from '../lib/supabase.js';
+import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
@@ -126,6 +126,11 @@ export function AuthProvider({ children }) {
   // Google OAuth login
   // --------------------------------------------------
   const loginWithGoogle = useCallback(async (role = 'citizen') => {
+    if (!isSupabaseConfigured) {
+      throw new Error(
+        'Supabase is not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to Netlify Environment Variables.'
+      );
+    }
     if (role) {
       localStorage.setItem('pending_login_role', role);
     }
