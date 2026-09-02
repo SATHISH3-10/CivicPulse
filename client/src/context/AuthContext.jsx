@@ -7,7 +7,6 @@ import {
 } from 'react';
 
 import api from '../services/api.js';
-import { supabase, isSupabaseConfigured } from '../lib/supabase.js';
 
 const AuthContext = createContext(null);
 
@@ -209,17 +208,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     localStorage.removeItem('civicpulse_token');
     localStorage.removeItem('civicpulse_user');
-
     setUser(null);
-
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.warn(
-        'Supabase logout warning:',
-        error
-      );
-    }
   }, []);
 
   // --------------------------------------------------
