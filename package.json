@@ -1,0 +1,16 @@
+{
+  "name": "civicpulse-ai",
+  "version": "1.0.0",
+  "description": "CivicPulse AI - Smart Civic Complaint & Resolution Platform",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && node --watch server.js",
+    "client": "cd client && npm run dev",
+    "seed": "cd server && node db/seed.js",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "setup": "npm run install-all && npm run seed"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

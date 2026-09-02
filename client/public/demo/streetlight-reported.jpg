@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <!-- Night sky background -->
+  <rect width="800" height="600" fill="#090d16"/>
+  
+  <!-- Distant dark tree foliage & shadows -->
+  <path d="M0 450 Q100 380 200 440 Q300 370 450 430 Q600 360 800 450 L800 600 L0 600 Z" fill="#0f172a" opacity="0.9"/>
+  <path d="M0 480 Q150 420 300 470 Q500 410 800 490 L800 600 L0 600 Z" fill="#1e293b" opacity="0.8"/>
+
+  <!-- Asphalt Road -->
+  <polygon points="120,600 300,460 500,460 680,600" fill="#1c1917"/>
+  <!-- Road side white line -->
+  <line x1="260" y1="600" x2="350" y2="460" stroke="#f1f5f9" stroke-width="4" stroke-dasharray="20 15"/>
+
+  <!-- Concrete Base of Streetlight Pole -->
+  <polygon points="380,520 440,520 450,480 370,480" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+  <rect x="375" y="470" width="70" height="12" fill="#64748b"/>
+
+  <!-- Vertical Pole (Yellow & Metal) -->
+  <rect x="403" y="120" width="14" height="350" fill="#eab308" stroke="#ca8a04" stroke-width="1"/>
+  <rect x="403" y="240" width="14" height="230" fill="#cbd5e1" stroke="#94a3b8" stroke-width="1"/>
+  
+  <!-- Junction Box / Electrical Panel on Pole -->
+  <rect x="396" y="220" width="28" height="36" rx="3" fill="#475569" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Solar Panel on top of pole -->
+  <polygon points="385,85 435,85 445,105 375,105" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
+  <line x1="395" y1="85" x2="390" y2="105" stroke="#38bdf8" stroke-width="1"/>
+  <line x1="410" y1="85" x2="410" y2="105" stroke="#38bdf8" stroke-width="1"/>
+  <line x1="425" y1="85" x2="430" y2="105" stroke="#38bdf8" stroke-width="1"/>
+
+  <!-- Dual Street Light Angled Arms -->
+  <path d="M410 120 L270 70 M410 120 L550 70" stroke="#cbd5e1" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Left Lamp Fixture (DARK / BROKEN - NO LIGHT) -->
+  <rect x="250" y="60" width="28" height="12" rx="2" fill="#334155" transform="rotate(20 250 60)"/>
+  <!-- Right Lamp Fixture (DARK / BROKEN - NO LIGHT) -->
+  <rect x="540" y="70" width="28" height="12" rx="2" fill="#334155" transform="rotate(-20 540 70)"/>
+
+  <!-- Speed Limit Signboard (50 in Red Circle) -->
+  <rect x="340" y="380" width="56" height="70" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <circle cx="368" cy="410" r="20" fill="none" stroke="#dc2626" stroke-width="4"/>
+  <text x="368" y="417" font-family="Arial, sans-serif" font-weight="900" font-size="16" fill="#111827" text-anchor="middle">50</text>
+  <text x="368" y="442" font-family="Arial, sans-serif" font-weight="700" font-size="7" fill="#6b7280" text-anchor="middle">Speed Limit</text>
+
+  <!-- Street Name Signboard below Speed limit -->
+  <rect x="350" y="456" width="60" height="16" fill="#15803d" rx="2"/>
+  <text x="380" y="468" font-family="Arial, sans-serif" font-weight="bold" font-size="8" fill="#ffffff" text-anchor="middle">NH138 ROAD</text>
+
+  <!-- Distant vehicle tail lights in darkness -->
+  <circle cx="180" cy="520" r="3" fill="#ef4444" opacity="0.8"/>
+  <circle cx="190" cy="520" r="3" fill="#ef4444" opacity="0.8"/>
+
+  <!-- Status / Proof Badge Overlay -->
+  <rect x="24" y="24" width="240" height="42" rx="8" fill="#0f172a" opacity="0.85" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="144" y="50" font-family="sans-serif" font-weight="bold" font-size="14" fill="#f87171" text-anchor="middle">💡 CITIZEN PROOF: DARK LAMP</text>
+</svg>
