@@ -92,9 +92,10 @@ Create `client/.env` from [client/.env.example](client/.env.example) and set the
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 ```
 
-In Supabase Authentication settings, add `http://localhost:5173/auth/callback` to the allowed redirect URLs and enable Google as a provider.
+Enable Google as a provider in Supabase. In Google Cloud Console, add your frontend origins (for example `http://localhost:5173`) to the OAuth web client configured in `VITE_GOOGLE_CLIENT_ID`.
 
 ### 3. Install dependencies
 
@@ -165,4 +166,4 @@ All protected endpoints require `Authorization: Bearer <token>`.
 - The application stores documents as JSONB records in separate Supabase tables while retaining the existing model-style server API.
 - Uploaded files are served from `server/uploads`; demo evidence assets are served from the client public directory.
 - The AI service is local and deterministic, so the demo does not require an external AI provider.
-- Google OAuth uses the Supabase publishable key in the frontend, then exchanges a verified Supabase access token for the existing CivicPulse JWT. Configure `/auth/callback` as an allowed redirect URL in Supabase.
+- Google Identity Services obtains an ID token in the frontend and passes it to Supabase with `signInWithIdToken`, then the app exchanges the resulting verified Supabase access token for its existing CivicPulse JWT. No Supabase OAuth redirect URL is used.

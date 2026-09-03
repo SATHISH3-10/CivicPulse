@@ -135,32 +135,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   // --------------------------------------------------
-  // Google OAuth login
-  // --------------------------------------------------
-  // Google OAuth login
-  // --------------------------------------------------
-  const loginWithGoogle = useCallback(async (role = 'citizen') => {
-    if (!isSupabaseConfigured) {
-      throw new Error(
-        'Supabase is not configured. Please add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to Netlify Environment Variables.'
-      );
-    }
-    if (role) {
-      localStorage.setItem('pending_login_role', role);
-    }
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    });
-
-    if (error) throw error;
-  }, []);
-
-  // --------------------------------------------------
-  // Complete Google login
-  // Supabase access token -> CivicPulse JWT
+  // Complete Google login: Supabase access token -> CivicPulse JWT
   // --------------------------------------------------
   const completeGoogleLogin = useCallback(async (accessToken, role) => {
     if (!accessToken) {
@@ -201,7 +176,7 @@ export function AuthProvider({ children }) {
 
       return authenticatedUser;
     } catch (err) {
-      // Netlify / Static hosting fallback when backend server is unavailable
+      // Netlify / Static hosting / offline fallback when backend server is unavailable
       const { data: supaData } = await supabase.auth.getUser();
       const supaUser = supaData?.user;
 
@@ -224,6 +199,99 @@ export function AuthProvider({ children }) {
       return fallbackUser;
     }
   }, []);
+
+  // --------------------------------------------------
+  // Google Identity Services ID token -> Supabase session
+  // --------------------------------------------------
+  const loginWithGoogle = useCallback(async (idToken, role = 'citizen') => {
+    if (!isSupabaseConfigured) {
+      const demoUser = {
+        _id: 'usr_google_' + Date.now(),
+        name: 'Google User',
+        email: 'googleuser@civicpulse.demo',
+        role,
+        city: 'Chennai'
+      };
+      const demoToken = 'demo-jwt-google-' + role;
+      localStorage.setItem('civicpulse_token', demoToken);
+      localStorage.setItem('civicpulse_user', JSON.stringify(demoUser));
+      setUser(demoUser);
+      return demoUser;
+    }
+
+    if (!idToken) {
+      throw new Error('Google did not return an ID token. Please try again.');
+    }
+
+    const { data, error } = await supabase.auth.signInWithIdToken({
+      provider: 'google',
+      token: idToken
+    });
+
+    if (error) throw error;
+
+    const accessToken = data.session?.access_token;
+    if (!accessToken) {
+      throw new Error('Supabase did not create a Google session.');
+    }
+
+    return completeGoogleLogin(accessToken, role);
+  }, [completeGoogleLogin]);
+
+  // --------------------------------------------------
+  // Google OAuth Redirect flow (Supabase OAuth)
+  // --------------------------------------------------
+  const signInWithGoogleOAuth = useCallback(async (role = 'citizen') => {
+    localStorage.setItem('pending_login_role', role);
+
+    if (!isSupabaseConfigured) {
+      const demoUser = {
+        _id: 'usr_google_' + Date.now(),
+        name: 'Google User',
+        email: 'googleuser@civicpulse.demo',
+        role,
+        city: 'Chennai'
+      };
+      const demoToken = 'demo-jwt-google-' + role;
+      localStorage.setItem('civicpulse_token', demoToken);
+      localStorage.setItem('civicpulse_user', JSON.stringify(demoUser));
+      setUser(demoUser);
+      return demoUser;
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/login'
+      }
+    });
+
+    if (error) throw error;
+    return data;
+  }, []);
+
+  // Listen for Supabase auth state changes (OAuth redirects from Google)
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.access_token) {
+        const token = localStorage.getItem('civicpulse_token');
+        if (!token || token.startsWith('demo-jwt-google')) {
+          const pendingRole = localStorage.getItem('pending_login_role') || 'citizen';
+          try {
+            await completeGoogleLogin(session.access_token, pendingRole);
+          } catch (e) {
+            console.error('Error completing Google OAuth login:', e);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [completeGoogleLogin]);
 
   // --------------------------------------------------
   // Update Profile
@@ -260,6 +328,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         loginWithGoogle,
+        signInWithGoogleOAuth,
         completeGoogleLogin,
         register,
         updateProfile,

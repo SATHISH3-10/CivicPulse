@@ -9,7 +9,6 @@ import DashboardLayout from './layouts/DashboardLayout.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
-import AuthCallback from './pages/AuthCallback.jsx';
 
 // Citizen Pages
 import CitizenDashboard from './pages/citizen/Dashboard.jsx';
@@ -45,7 +44,6 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
 
               {/* Citizen Protected Routes */}
               <Route
