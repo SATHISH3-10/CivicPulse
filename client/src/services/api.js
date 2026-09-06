@@ -5,7 +5,32 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  adapter: async (config) => {
+    // If no backend API URL is set (standalone static Netlify mode), use mock adapter directly to prevent console 404 network errors
+    if (!import.meta.env.VITE_API_URL && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      const url = config.url || '';
+      const method = (config.method || 'GET').toUpperCase();
+      let body = null;
+      if (config.data) {
+        try {
+          body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
+        } catch {
+          body = config.data;
+        }
+      }
+      const mock = handleMockRequest(url, method, body);
+      return {
+        data: mock.data,
+        status: mock.status,
+        statusText: 'OK',
+        headers: { 'content-type': 'application/json' },
+        config
+      };
+    }
+    // Standard HTTP adapter for local dev or live backend
+    return axios.defaults.adapter(config);
+  }
 });
 
 api.interceptors.request.use(config => {
@@ -24,12 +49,11 @@ api.interceptors.response.use(
     return response;
   },
   error => {
-    // Fallback to demo mock store if network fails, or 404/500 occurred on Netlify static hosting
+    // Fallback to demo mock store if network fails, or 404/500 occurred
     const isDemoToken = localStorage.getItem('civicpulse_token')?.startsWith('demo-');
     const isDemoUser = localStorage.getItem('civicpulse_user')?.includes('civicpulse.demo');
-    const isNetlifyStatic = !import.meta.env.VITE_API_URL;
 
-    if (isNetlifyStatic || isDemoToken || isDemoUser || !error.response || error.response.status === 404) {
+    if (isDemoToken || isDemoUser || !error.response || error.response.status === 404) {
       try {
         const body = error.config?.data ? (typeof error.config.data === 'string' ? JSON.parse(error.config.data) : error.config.data) : null;
         const mock = handleMockRequest(error.config?.url || '', error.config?.method?.toUpperCase() || 'GET', body);
