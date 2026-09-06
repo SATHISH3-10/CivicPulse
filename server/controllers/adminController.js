@@ -230,13 +230,104 @@ export async function getOfficers(req, res) {
 
 export async function getUsers(req, res) {
   try {
-    const users = await User.find()
-      .select('-passwordHash')
-      .sort({ createdAt: -1 })
-      .lean();
-    res.json({ users });
+    const rawUsers = await User.find().lean();
+    const users = (rawUsers || []).map(u => {
+      const copy = { ...u };
+      delete copy.passwordHash;
+      return copy;
+    });
+    res.json({ users, total: users.length });
   } catch (error) {
     console.error('Failed to fetch users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
+    res.status(500).json({ error: 'Failed to fetch users: ' + error.message });
   }
 }
+
+const AREA_COORDINATES = {
+  'Anna Nagar': { lat: 13.0850, lng: 80.2101 },
+  'T. Nagar': { lat: 13.0418, lng: 80.2341 },
+  'Adyar': { lat: 13.0012, lng: 80.2565 },
+  'Velachery': { lat: 12.9815, lng: 80.2180 },
+  'Mylapore': { lat: 13.0339, lng: 80.2676 },
+  'Guindy': { lat: 13.0067, lng: 80.2206 },
+  'Tambaram': { lat: 12.9249, lng: 80.1000 },
+  'Chromepet': { lat: 12.9516, lng: 80.1462 },
+  'Porur': { lat: 13.0382, lng: 80.1567 },
+  'Egmore': { lat: 13.0732, lng: 80.2609 },
+  'Nungambakkam': { lat: 13.0569, lng: 80.2425 },
+  'Ashok Nagar': { lat: 13.0388, lng: 80.2112 },
+  'KK Nagar': { lat: 13.0390, lng: 80.2025 },
+  'Besant Nagar': { lat: 13.0002, lng: 80.2660 },
+  'Vadapalani': { lat: 13.0498, lng: 80.2121 },
+  'Other': { lat: 13.0827, lng: 80.2707 }
+};
+
+export async function updateUserPermit(req, res) {
+  try {
+    const { userId } = req.params;
+    const { role, departmentId, departmentName, badgeNumber, area } = req.body;
+
+    if (!['citizen', 'officer', 'admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role specified' });
+    }
+
+    let resolvedDeptId = departmentId;
+    if (!resolvedDeptId && departmentName) {
+      const dept = await Department.findOne({ name: departmentName });
+      if (dept) resolvedDeptId = dept._id;
+    }
+
+    const updates = { role };
+    if (role === 'officer') {
+      if (resolvedDeptId) updates.departmentId = resolvedDeptId;
+      if (badgeNumber !== undefined) updates.badgeNumber = badgeNumber;
+      if (area) updates.area = area;
+    } else if (role === 'citizen') {
+      updates.departmentId = null;
+      updates.badgeNumber = '';
+    }
+
+    const user = await User.findOneAndUpdate({ _id: userId }, updates, { new: true });
+    if (!user) {
+      return res.status(404).json({ error: 'User account not found' });
+    }
+
+    if (role === 'officer') {
+      const coords = AREA_COORDINATES[user.area || 'Anna Nagar'] || AREA_COORDINATES['Other'];
+      await Officer.findOneAndUpdate(
+        { userId: user._id },
+        {
+          userId: user._id,
+          departmentId: resolvedDeptId || user.departmentId,
+          district: user.district || 'Chennai',
+          area: user.area || 'Anna Nagar',
+          latitude: coords.lat,
+          longitude: coords.lng,
+          jurisdictionRadiusKm: 8,
+          availability: 'available'
+        },
+        { upsert: true, new: true }
+      );
+
+      await Notification.create({
+        userId: user._id,
+        type: 'status_update',
+        message: `🎉 Municipal Admin has granted you Field Officer credentials for ${user.area || 'Chennai'}`
+      });
+    } else if (role === 'citizen') {
+      await Officer.deleteMany({ userId: user._id });
+
+      await Notification.create({
+        userId: user._id,
+        type: 'status_update',
+        message: 'Municipal Admin has revoked your Field Officer permit. Your account role is set to Citizen.'
+      });
+    }
+
+    res.json({ message: `User position updated to ${role} successfully`, user });
+  } catch (error) {
+    console.error('Update user permit error:', error);
+    res.status(500).json({ error: 'Failed to update user permit: ' + error.message });
+  }
+}
+

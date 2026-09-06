@@ -25,17 +25,17 @@ export default function AdminLiveMap() {
   }
 
   useEffect(() => {
-    if (!mapRef.current || complaints.length === 0) return;
+    if (!mapRef.current) return;
     import('leaflet').then(L => {
       if (mapInstance.current) mapInstance.current.remove();
-      const map = L.default.map(mapRef.current).setView([13.0500, 80.2200], 12);
+      const map = L.default.map(mapRef.current).setView([13.0827, 80.2707], 12);
       L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
       const colors = { P1: '#DC2626', P2: '#EA580C', P3: '#D97706', P4: '#059669' };
-      const filtered = complaints.filter(c => filter === 'all' || c.category === filter);
+      const filtered = (complaints || []).filter(c => filter === 'all' || c.category === filter);
 
-      // Heatmap-style: cluster close markers
       filtered.forEach(c => {
+        if (c.latitude == null || c.longitude == null) return;
         const color = c.status === 'resolved' ? '#059669' : colors[c.priority] || '#6B7280';
         const size = c.priority === 'P1' ? 16 : c.priority === 'P2' ? 14 : 12;
         const icon = L.default.divIcon({
@@ -44,7 +44,7 @@ export default function AdminLiveMap() {
           iconSize: [size, size]
         });
         L.default.marker([c.latitude, c.longitude], { icon }).addTo(map)
-          .bindPopup(`<div style="min-width:220px"><strong>${c.title}</strong><br/><span style="color:${color};font-weight:700">${c.priority}</span> • ${c.status.replace(/_/g,' ')}<br/><small>📍 ${c.address || ''}</small><br/><small>${c.category} • ${c.complaintId}</small></div>`);
+          .bindPopup(`<div style="min-width:220px"><strong>${c.title}</strong><br/><span style="color:${color};font-weight:700">${c.priority}</span> • ${c.status?.replace(/_/g,' ') || 'submitted'}<br/><small>📍 ${c.address || ''}</small><br/><small>${c.category || ''} • ${c.complaintId || ''}</small></div>`);
       });
 
       mapInstance.current = map;

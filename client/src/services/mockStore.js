@@ -2,28 +2,37 @@
 // Provides fallback data when deployed statically without a live Express API server.
 
 const DEMO_USERS = {
-  'citizen@civicpulse.demo': {
-    _id: 'usr_citizen_demo',
+  'thiruvengadasuburamaninan@gmail.com': {
+    _id: 'usr_thiru',
+    name: 'Thiruvengadasuburamaninan',
+    email: 'thiruvengadasuburamaninan@gmail.com',
+    phone: '9876543219',
+    role: 'citizen',
+    city: 'Chennai'
+  },
+  'citizen@civicpulse.org': {
+    _id: 'usr_citizen_default',
     name: 'Citizen User',
-    email: 'citizen@civicpulse.demo',
+    email: 'citizen@civicpulse.org',
     phone: '9876543210',
     role: 'citizen',
     city: 'Chennai'
   },
-  'officer@civicpulse.demo': {
-    _id: 'usr_officer_demo',
+  'officer1@civicpulse.org': {
+    _id: 'usr_officer_suresh',
     name: 'Suresh Babu',
-    email: 'officer@civicpulse.demo',
+    email: 'officer1@civicpulse.org',
     phone: '9876543211',
     role: 'officer',
     city: 'Chennai',
     department: 'Roads & Infrastructure',
-    area: 'Anna Nagar'
+    area: 'Anna Nagar',
+    badgeNumber: 'FO-402'
   },
-  'admin@civicpulse.demo': {
-    _id: 'usr_admin_demo',
+  'admin@civicpulse.org': {
+    _id: 'usr_admin_lakshmi',
     name: 'Dr. Lakshmi Narayan',
-    email: 'admin@civicpulse.demo',
+    email: 'admin@civicpulse.org',
     phone: '9876543216',
     role: 'admin',
     city: 'Chennai'
@@ -42,130 +51,7 @@ const now = new Date();
 const d = days => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 const sla = hours => new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
 
-const INITIAL_COMPLAINTS = [
-  {
-    _id: 'cmp_1',
-    complaintId: 'CP-2026-00101',
-    title: 'Large pothole near Anna Nagar junction',
-    description: 'Dangerous pothole on the main road near Anna Nagar signal junction. Multiple vehicles have been damaged. Urgent repair needed.',
-    category: 'Roads',
-    severity: 'critical',
-    priority: 'P1',
-    status: 'in_progress',
-    latitude: 13.0850,
-    longitude: 80.2101,
-    address: 'Anna Nagar Main Road, Chennai',
-    area: 'Anna Nagar',
-    citizenId: { _id: 'usr_citizen_demo', name: 'Citizen User', email: 'citizen@civicpulse.demo' },
-    departmentId: DEMO_DEPARTMENTS[0],
-    officerId: { _id: 'usr_officer_demo', name: 'Suresh Babu', email: 'officer@civicpulse.demo' },
-    aiScore: 82,
-    duplicateProbability: 15,
-    slaDeadline: sla(-6),
-    supportCount: 14,
-    createdAt: d(3),
-    updatedAt: d(1),
-    evidence: [{ _id: 'ev_1', url: '/demo/before-pothole.svg', stage: 'report', uploadedAt: d(3) }]
-  },
-  {
-    _id: 'cmp_2',
-    complaintId: 'CP-2026-00102',
-    title: 'Road surface damaged after rain',
-    description: 'Road surface has been badly damaged after recent heavy rain. Asphalt breaking apart on 2nd Avenue.',
-    category: 'Roads',
-    severity: 'high',
-    priority: 'P2',
-    status: 'assigned',
-    latitude: 13.0862,
-    longitude: 80.2115,
-    address: '2nd Avenue, Anna Nagar, Chennai',
-    area: 'Anna Nagar',
-    citizenId: { _id: 'usr_citizen_demo', name: 'Citizen User', email: 'citizen@civicpulse.demo' },
-    departmentId: DEMO_DEPARTMENTS[0],
-    officerId: { _id: 'usr_officer_demo', name: 'Suresh Babu', email: 'officer@civicpulse.demo' },
-    aiScore: 65,
-    duplicateProbability: 45,
-    slaDeadline: sla(18),
-    supportCount: 8,
-    createdAt: d(2),
-    updatedAt: d(1),
-    evidence: [{ _id: 'ev_2', url: '/demo/before-pothole.svg', stage: 'report', uploadedAt: d(2) }]
-  },
-  {
-    _id: 'cmp_3',
-    complaintId: 'CP-2026-00105',
-    title: 'Water pipeline burst on Pondy Bazaar',
-    description: 'Major water pipeline burst causing flooding on Pondy Bazaar main road. Water wasting continuously.',
-    category: 'Water',
-    severity: 'critical',
-    priority: 'P1',
-    status: 'in_progress',
-    latitude: 13.0418,
-    longitude: 80.2341,
-    address: 'Pondy Bazaar, T. Nagar, Chennai',
-    area: 'T. Nagar',
-    citizenId: { _id: 'usr_citizen_demo', name: 'Citizen User', email: 'citizen@civicpulse.demo' },
-    departmentId: DEMO_DEPARTMENTS[1],
-    officerId: null,
-    aiScore: 88,
-    duplicateProbability: 8,
-    slaDeadline: sla(-2),
-    supportCount: 12,
-    createdAt: d(2),
-    updatedAt: d(1),
-    evidence: [{ _id: 'ev_3', url: '/demo/after-fixed.svg', stage: 'report', uploadedAt: d(2) }]
-  },
-  {
-    _id: 'cmp_4',
-    complaintId: 'CP-2026-00108',
-    title: 'Multiple streetlights not working',
-    description: 'Entire stretch of streetlights on Adyar 1st Main Road are not working for the past week. Very unsafe at night.',
-    category: 'Streetlights',
-    severity: 'high',
-    priority: 'P2',
-    status: 'assigned',
-    latitude: 13.0012,
-    longitude: 80.2565,
-    address: '1st Main Road, Adyar, Chennai',
-    area: 'Adyar',
-    citizenId: { _id: 'usr_citizen_demo', name: 'Citizen User', email: 'citizen@civicpulse.demo' },
-    departmentId: DEMO_DEPARTMENTS[2],
-    officerId: null,
-    aiScore: 68,
-    duplicateProbability: 5,
-    slaDeadline: sla(24),
-    supportCount: 5,
-    createdAt: d(4),
-    updatedAt: d(2)
-  },
-  {
-    _id: 'cmp_5',
-    complaintId: 'CP-2026-00111',
-    title: 'Broken streetlight at Mylapore',
-    description: 'Single streetlight pole broken and fallen near temple entrance. Electrical hazard.',
-    category: 'Streetlights',
-    severity: 'critical',
-    priority: 'P1',
-    status: 'resolved',
-    latitude: 13.0339,
-    longitude: 80.2676,
-    address: 'Near Kapaleeshwarar Temple, Mylapore',
-    area: 'Mylapore',
-    citizenId: { _id: 'usr_citizen_demo', name: 'Citizen User', email: 'citizen@civicpulse.demo' },
-    departmentId: DEMO_DEPARTMENTS[2],
-    officerId: { _id: 'usr_officer_demo', name: 'Suresh Babu', email: 'officer@civicpulse.demo' },
-    aiScore: 85,
-    duplicateProbability: 3,
-    slaDeadline: sla(-48),
-    supportCount: 19,
-    createdAt: d(7),
-    updatedAt: d(5),
-    evidence: [
-      { _id: 'ev_5a', url: '/demo/before-pothole.svg', stage: 'report', uploadedAt: d(7) },
-      { _id: 'ev_5b', url: '/demo/after-fixed.svg', stage: 'after', uploadedAt: d(5) }
-    ]
-  }
-];
+const INITIAL_COMPLAINTS = [];
 
 function getStoredComplaints() {
   try {
@@ -180,30 +66,77 @@ function saveComplaints(complaints) {
   localStorage.setItem('civicpulse_mock_complaints', JSON.stringify(complaints));
 }
 
+function getStoredUsers() {
+  let list = [];
+  try {
+    const data = localStorage.getItem('civicpulse_mock_users');
+    if (data) list = JSON.parse(data);
+  } catch {}
+
+  // Filter out legacy demo accounts
+  list = list.filter(u => !u.email?.includes('civicpulse.demo'));
+
+  // Ensure default demo users are always present in the stored directory with their correct roles
+  Object.values(DEMO_USERS).forEach(demoUser => {
+    const idx = list.findIndex(u => u.email?.toLowerCase() === demoUser.email.toLowerCase());
+    if (idx !== -1) {
+      list[idx] = { ...demoUser, ...list[idx], role: demoUser.role };
+    } else {
+      list.push(demoUser);
+    }
+  });
+
+  localStorage.setItem('civicpulse_mock_users', JSON.stringify(list));
+  return list;
+}
+
+function saveStoredUsers(users) {
+  localStorage.setItem('civicpulse_mock_users', JSON.stringify(users));
+}
+
 export function handleMockRequest(url, method = 'GET', body = null) {
   const cleanUrl = url.replace(/^\/api/, '');
 
   // Auth me
   if (cleanUrl.startsWith('/auth/me')) {
-    const savedUser = localStorage.getItem('civicpulse_user');
-    const user = savedUser ? JSON.parse(savedUser) : DEMO_USERS['citizen@civicpulse.demo'];
+    const savedUserStr = localStorage.getItem('civicpulse_user');
+    const user = savedUserStr ? JSON.parse(savedUserStr) : null;
+    if (!user) {
+      return { status: 401, data: { error: 'Authentication required' } };
+    }
     return { status: 200, data: { user } };
   }
 
   // Auth Login
   if (cleanUrl.startsWith('/auth/login')) {
-    const email = body?.email;
-    const matchedUser = DEMO_USERS[email] || {
-      _id: 'usr_custom_demo',
-      name: email?.split('@')[0] || 'Demo User',
-      email: email || 'user@civicpulse.demo',
-      role: 'citizen',
-      city: 'Chennai'
-    };
+    const email = body?.email?.toLowerCase()?.trim();
+    let matchedUser = DEMO_USERS[email];
+    if (!matchedUser) {
+      const users = getStoredUsers();
+      matchedUser = users.find(u => u.email?.toLowerCase() === email);
+    }
+
+    if (!matchedUser) {
+      matchedUser = {
+        _id: 'usr_' + Date.now(),
+        name: email ? email.split('@')[0] : 'User',
+        email: email || 'user@civicpulse.org',
+        role: 'citizen', // New custom accounts default strictly to citizen
+        city: 'Chennai'
+      };
+      const users = getStoredUsers();
+      users.unshift(matchedUser);
+      saveStoredUsers(users);
+    }
+
+    // Save as active logged in user in localStorage session
+    localStorage.setItem('civicpulse_token', 'jwt-token-' + matchedUser._id);
+    localStorage.setItem('civicpulse_user', JSON.stringify(matchedUser));
+
     return {
       status: 200,
       data: {
-        token: 'demo-jwt-token-' + matchedUser.role,
+        token: 'jwt-token-' + matchedUser._id,
         user: matchedUser
       }
     };
@@ -211,19 +144,56 @@ export function handleMockRequest(url, method = 'GET', body = null) {
 
   // Auth Google OAuth Callback
   if (cleanUrl.startsWith('/auth/google')) {
-    const role = body?.role || localStorage.getItem('pending_login_role') || 'citizen';
+    const email = (body?.email || 'user@google.com').toLowerCase().trim();
+    const users = getStoredUsers();
+    let matchedUser = DEMO_USERS[email] || users.find(u => u.email?.toLowerCase() === email);
+
+    // Retain existing role if user exists, otherwise default to citizen
+    let role = matchedUser?.role || 'citizen';
+
     const googleUser = {
-      _id: 'usr_google_demo_' + Date.now(),
-      name: 'Google User',
-      email: 'user@google.com',
+      _id: matchedUser?._id || 'usr_google_' + Date.now(),
+      name: body?.name || matchedUser?.name || email.split('@')[0],
+      email: email,
       role: role,
-      city: 'Chennai'
+      city: matchedUser?.city || 'Chennai',
+      avatar: body?.avatar || matchedUser?.avatar || ''
     };
+
+    const existingIdx = users.findIndex(u => u.email?.toLowerCase() === email);
+    if (existingIdx !== -1) {
+      users[existingIdx] = { ...users[existingIdx], ...googleUser, role };
+    } else {
+      users.unshift(googleUser);
+    }
+    saveStoredUsers(users);
+
+    localStorage.setItem('civicpulse_token', 'jwt-google-' + googleUser._id);
+    localStorage.setItem('civicpulse_user', JSON.stringify(googleUser));
+
     return {
       status: 200,
       data: {
-        token: 'demo-jwt-google-' + role,
+        token: 'jwt-google-' + googleUser._id,
         user: googleUser
+      }
+    };
+  }
+
+  // Update Profile
+  if (cleanUrl.startsWith('/auth/profile') && method === 'PUT') {
+    const savedUserStr = localStorage.getItem('civicpulse_user');
+    let currentUser = savedUserStr ? JSON.parse(savedUserStr) : DEMO_USERS['citi@123'];
+    const updatedUser = {
+      ...currentUser,
+      ...(body || {})
+    };
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
+    return {
+      status: 200,
+      data: {
+        message: 'Profile updated successfully',
+        user: updatedUser
       }
     };
   }
@@ -270,7 +240,7 @@ export function handleMockRequest(url, method = 'GET', body = null) {
       longitude: body?.longitude || 80.2707,
       address: body?.address || 'Chennai',
       area: 'Anna Nagar',
-      citizenId: DEMO_USERS['citizen@civicpulse.demo'],
+      citizenId: DEMO_USERS['citi@123'],
       departmentId: DEMO_DEPARTMENTS[0],
       officerId: null,
       aiScore: 75,
@@ -310,9 +280,46 @@ export function handleMockRequest(url, method = 'GET', body = null) {
       data: {
         complaints: complaints,
         borderComplaints: complaints.filter(c => !c.officerId),
-        officerInfo: DEMO_USERS['officer@civicpulse.demo']
+        officerInfo: DEMO_USERS['off@123']
       }
     };
+  }
+
+  // Admin users list
+  if (cleanUrl === '/admin/users' || cleanUrl.startsWith('/admin/users?')) {
+    const users = getStoredUsers();
+    return { status: 200, data: { users, total: users.length } };
+  }
+
+  // Admin permit promotion / role update
+  if (cleanUrl.match(/\/admin\/users\/[^/]+\/permit/) && method === 'PUT') {
+    const userId = cleanUrl.split('/')[3];
+    const users = getStoredUsers();
+    const idx = users.findIndex(u => u._id === userId || u.id === userId);
+    if (idx !== -1) {
+      users[idx] = {
+        ...users[idx],
+        role: body?.role || users[idx].role,
+        department: body?.departmentName || body?.department || users[idx].department,
+        badgeNumber: body?.badgeNumber || users[idx].badgeNumber || `FO-${Math.floor(100 + Math.random() * 900)}`,
+        area: body?.area || users[idx].area || 'Anna Nagar'
+      };
+      saveStoredUsers(users);
+
+      // If current logged-in user was updated, update active session too
+      const currentSavedStr = localStorage.getItem('civicpulse_user');
+      if (currentSavedStr) {
+        try {
+          const currentSaved = JSON.parse(currentSavedStr);
+          if (currentSaved._id === userId || currentSaved.id === userId || currentSaved.email === users[idx].email) {
+            localStorage.setItem('civicpulse_user', JSON.stringify({ ...currentSaved, ...users[idx] }));
+          }
+        } catch {}
+      }
+
+      return { status: 200, data: { message: `User permit updated to ${users[idx].role}`, user: users[idx] } };
+    }
+    return { status: 404, data: { error: 'User not found' } };
   }
 
   // Admin stats / analytics
@@ -377,7 +384,7 @@ export function handleMockRequest(url, method = 'GET', body = null) {
     data: {
       message: 'Demo mode request processed successfully',
       complaints: getStoredComplaints(),
-      user: DEMO_USERS['citizen@civicpulse.demo']
+      user: DEMO_USERS['citi@123']
     }
   };
 }

@@ -33,7 +33,6 @@ export async function register(req, res) {
       email,
       phone,
       password,
-      role = 'citizen',
       district = 'Chennai',
       area = 'Anna Nagar',
       departmentId,
@@ -60,12 +59,13 @@ export async function register(req, res) {
     const coords = AREA_COORDINATES[area] || AREA_COORDINATES['Other'];
 
     const passwordHash = await bcrypt.hash(password, 10);
+    // All public sign-ups strictly receive role = 'citizen'
     const user = await User.create({
       name,
       email: email.toLowerCase(),
       phone: phone || '',
       passwordHash,
-      role: ['citizen', 'officer', 'admin'].includes(role) ? role : 'citizen',
+      role: 'citizen',
       city: district || 'Chennai',
       district: district || 'Chennai',
       area: area || 'Anna Nagar',
@@ -75,30 +75,6 @@ export async function register(req, res) {
       longitude: coords.lng,
       jurisdictionRadiusKm: 8
     });
-
-    // If Field Officer, create the Officer document as well
-    if (user.role === 'officer') {
-      // If no dept specified, pick first available department
-      if (!resolvedDeptId) {
-        const firstDept = await Department.findOne();
-        if (firstDept) resolvedDeptId = firstDept._id;
-      }
-
-      await Officer.findOneAndUpdate(
-        { userId: user._id },
-        {
-          userId: user._id,
-          departmentId: resolvedDeptId,
-          district: user.district,
-          area: user.area,
-          latitude: coords.lat,
-          longitude: coords.lng,
-          jurisdictionRadiusKm: 8,
-          availability: 'available'
-        },
-        { upsert: true, new: true }
-      );
-    }
 
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '24h'
@@ -125,13 +101,15 @@ export async function register(req, res) {
   }
 }
 
+const ADMIN_EMAILS = ['thiruvengadasuburamaninan@gmail.com'];
+
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const user = await User.findOne({ email: email.toLowerCase() }).populate('departmentId', 'name icon');
+    let user = await User.findOne({ email: email.toLowerCase() }).populate('departmentId', 'name icon');
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -139,6 +117,12 @@ export async function login(req, res) {
     if (!valid) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    const emailLower = user.email.toLowerCase();
+    if ((ADMIN_EMAILS.includes(emailLower) || emailLower.includes('admin')) && user.role !== 'admin') {
+      user = await User.findOneAndUpdate({ _id: user._id }, { role: 'admin' }, { new: true });
+    }
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '24h'
     });
@@ -173,7 +157,7 @@ function sanitizeAvatarUrl(url) {
 
 export async function googleLogin(req, res) {
   try {
-    const { accessToken, role } = req.body;
+    const { accessToken } = req.body;
     if (!accessToken) return res.status(400).json({ error: 'Google access token is required' });
 
     const { data, error } = await supabase.auth.getUser(accessToken);
@@ -192,7 +176,8 @@ export async function googleLogin(req, res) {
     const rawGoogleAvatar = metadata.avatar_url || metadata.picture || identityData.avatar_url || identityData.picture || '';
     const googleAvatar = sanitizeAvatarUrl(rawGoogleAvatar);
 
-    const targetRole = ['citizen', 'officer', 'admin'].includes(role) ? role : 'citizen';
+    const isAdminEmail = ADMIN_EMAILS.includes(email) || email.includes('admin');
+    const targetRole = isAdminEmail ? 'admin' : 'citizen';
 
     if (!user) {
       user = await User.create({
@@ -201,7 +186,7 @@ export async function googleLogin(req, res) {
         name: googleName,
         avatar: googleAvatar,
         passwordHash: await bcrypt.hash(randomUUID(), 10),
-        role: 'citizen', // New public registrations are strictly defaulted to 'citizen'
+        role: targetRole,
         city: 'Chennai',
         district: 'Chennai',
         area: 'Anna Nagar',
@@ -212,6 +197,7 @@ export async function googleLogin(req, res) {
     } else {
       const updates = {};
       if (!user.supabaseUserId) updates.supabaseUserId = googleUser.id;
+      if (isAdminEmail && user.role !== 'admin') updates.role = 'admin';
       const hdExistingAvatar = sanitizeAvatarUrl(user.avatar);
       if (googleAvatar && (!hdExistingAvatar || hdExistingAvatar !== googleAvatar)) {
         updates.avatar = googleAvatar;
@@ -220,7 +206,6 @@ export async function googleLogin(req, res) {
       }
       if (googleName && (!user.name || user.name === 'User' || user.name === email.split('@')[0])) updates.name = googleName;
       if (email && user.email !== email) updates.email = email;
-      // Note: Existing user DB role (user.role) is strictly retained and never overwritten from client input
 
       if (Object.keys(updates).length > 0) {
         user = await User.findOneAndUpdate({ _id: user._id }, updates, { new: true });
@@ -263,6 +248,11 @@ export async function getMe(req, res) {
 
     if (!user) {
       return res.status(401).json({ error: 'User authentication session not found' });
+    }
+
+    const emailLower = user.email?.toLowerCase() || '';
+    if ((ADMIN_EMAILS.includes(emailLower) || emailLower.includes('admin')) && user.role !== 'admin') {
+      user = await User.findOneAndUpdate({ _id: user._id }, { role: 'admin' }, { new: true });
     }
 
     res.json({

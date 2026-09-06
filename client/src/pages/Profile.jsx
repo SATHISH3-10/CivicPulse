@@ -1,6 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import {
+  getHDAvatarUrl,
+  getGravatarUrl,
+  getUnavatarUrl
+} from '../lib/avatar.js';
 import {
   User,
   Mail,
@@ -12,12 +17,14 @@ import {
   X,
   Camera,
   Check,
-  Building,
-  Calendar,
   Upload,
   Trash2,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Sparkles,
+  Link as LinkIcon,
+  RefreshCw,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const TAMIL_NADU_AREAS = [
@@ -39,17 +46,6 @@ const TAMIL_NADU_AREAS = [
   'Other'
 ];
 
-function getHDAvatarUrl(url) {
-  if (!url || typeof url !== 'string') return '';
-  if (url.includes('googleusercontent.com')) {
-    if (url.includes('=s')) {
-      return url.replace(/=s\d+(-c)?/g, '=s400-c');
-    }
-    return url + '=s400-c';
-  }
-  return url;
-}
-
 export default function Profile() {
   const { user, updateProfile } = useAuth();
   const { addToast } = useToast();
@@ -57,6 +53,8 @@ export default function Profile() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Full-size image lightbox modal state
   const [showLightbox, setShowLightbox] = useState(false);
@@ -130,7 +128,6 @@ export default function Profile() {
     const img = new Image();
     img.src = rawImageForCrop;
     img.onload = () => {
-      // 800x800 High Definition Canvas for ultra-crisp profile avatar quality
       const CANVAS_SIZE = 800;
       const PREVIEW_SIZE = 260;
       const ratio = CANVAS_SIZE / PREVIEW_SIZE;
@@ -157,7 +154,6 @@ export default function Profile() {
       const dy = (CANVAS_SIZE / 2) - (dh / 2) + (cropPos.y * ratio);
 
       ctx.drawImage(img, dx, dy, dw, dh);
-      // High-quality JPEG output (0.95 compression ratio)
       const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.95);
 
       setFormData(prev => ({ ...prev, avatar: croppedDataUrl }));
@@ -188,18 +184,45 @@ export default function Profile() {
     setIsDragging(false);
   }
 
+  function handleUseGravatar() {
+    const userEmail = user?.email;
+    if (!userEmail) {
+      addToast('No email address found on user profile', 'error');
+      return;
+    }
+    const gravatarUrl = getGravatarUrl(userEmail, 400, 'identicon');
+    setFormData(prev => ({ ...prev, avatar: gravatarUrl }));
+    addToast('Applied Email Gravatar profile picture! Click "Save Changes" to save.', 'success');
+  }
+
+  function handleUseUnavatar() {
+    const userEmail = user?.email;
+    if (!userEmail) {
+      addToast('No email address found on user profile', 'error');
+      return;
+    }
+    const unavatarUrl = getUnavatarUrl(userEmail);
+    setFormData(prev => ({ ...prev, avatar: unavatarUrl }));
+    addToast('Applied Email Social profile picture! Click "Save Changes" to save.', 'success');
+  }
+
+  function handleApplyCustomUrl() {
+    if (!customUrlInput.trim()) {
+      addToast('Please enter a valid image URL', 'error');
+      return;
+    }
+    setFormData(prev => ({ ...prev, avatar: customUrlInput.trim() }));
+    setShowUrlInput(false);
+    setCustomUrlInput('');
+    addToast('Custom photo URL applied! Click "Save Changes" to save.', 'success');
+  }
+
   function handleRemovePhoto() {
     setFormData(prev => ({ ...prev, avatar: '' }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-    addToast('Photo removed. First letter initial of username will be used.', 'info');
-  }
-
-  function handleOpenLightbox(src) {
-    if (!src) return;
-    setLightboxSrc(src);
-    setShowLightbox(true);
+    addToast('Photo removed. Initial letter of your name will be used.', 'info');
   }
 
   function handleStartEditing() {
@@ -216,6 +239,7 @@ export default function Profile() {
 
   function handleCancelEditing() {
     setIsEditing(false);
+    setShowUrlInput(false);
     setFormData({
       name: user?.name || '',
       phone: user?.phone || '',
@@ -251,12 +275,15 @@ export default function Profile() {
 
   function handleOpenLightbox(src) {
     if (!src) return;
-    setLightboxSrc(getHDAvatarUrl(src));
+    setLightboxSrc(getHDAvatarUrl(src, user?.email));
     setShowLightbox(true);
   }
 
   const roleLabel = user?.role === 'admin' ? 'Municipal Authority' : user?.role === 'officer' ? 'Field Officer' : 'Citizen User';
-  const currentAvatar = getHDAvatarUrl(isEditing ? formData.avatar : user?.avatar);
+  
+  // Calculate active avatar display URL
+  const activeAvatarRaw = isEditing ? formData.avatar : user?.avatar;
+  const currentAvatar = getHDAvatarUrl(activeAvatarRaw, user?.email);
 
   return (
     <div className="fade-in" style={{ maxWidth: 840, margin: '0 auto' }}>
@@ -304,20 +331,20 @@ export default function Profile() {
           overflow: 'hidden'
         }}
       >
-        <div style={{ position: 'absolute', top: -30, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(0,180,216,0.15)', blur: '40px' }} />
+        <div style={{ position: 'absolute', top: -30, right: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(0,180,216,0.15)', filter: 'blur(40px)' }} />
 
         <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
           {/* Avatar Display */}
           <div style={{ position: 'relative' }}>
             {currentAvatar ? (
               <img
-                src={getHDAvatarUrl(currentAvatar)}
+                src={currentAvatar}
                 alt={user?.name || 'User'}
                 referrerPolicy="no-referrer"
                 onClick={() => handleOpenLightbox(currentAvatar)}
                 style={{
-                  width: 90,
-                  height: 90,
+                  width: 96,
+                  height: 96,
                   borderRadius: 'var(--radius-full)',
                   objectFit: 'cover',
                   border: '3px solid var(--teal-400)',
@@ -328,13 +355,9 @@ export default function Profile() {
                 }}
                 title="Touch / Click to view full image"
                 onError={(e) => {
-                  if (e.target.src !== currentAvatar && currentAvatar) {
-                    e.target.src = currentAvatar;
-                  } else {
-                    e.target.style.display = 'none';
-                    const fallback = e.target.parentElement?.querySelector('.avatar-fallback-initial');
-                    if (fallback) fallback.style.display = 'flex';
-                  }
+                  e.target.style.display = 'none';
+                  const fallback = e.target.parentElement?.querySelector('.avatar-fallback-initial');
+                  if (fallback) fallback.style.display = 'flex';
                 }}
               />
             ) : null}
@@ -342,15 +365,15 @@ export default function Profile() {
             <div
               className="avatar-fallback-initial"
               style={{
-                width: 90,
-                height: 90,
+                width: 96,
+                height: 96,
                 borderRadius: 'var(--radius-full)',
                 background: 'linear-gradient(135deg, var(--teal-500) 0%, var(--teal-700) 100%)',
                 color: 'white',
                 display: currentAvatar ? 'none' : 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '2.2rem',
+                fontSize: '2.4rem',
                 fontWeight: 800,
                 border: '3px solid rgba(255,255,255,0.4)',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
@@ -372,8 +395,8 @@ export default function Profile() {
                   color: 'white',
                   border: '2px solid white',
                   borderRadius: '50%',
-                  width: 34,
-                  height: 34,
+                  width: 36,
+                  height: 36,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -423,22 +446,54 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Device Photo Selection Controls Tray in Edit Mode */}
+        {/* Profile Picture Option Controls in Edit Mode */}
         {isEditing && (
           <div className="fade-in" style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--teal-300)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Upload size={16} /> Choose & Crop Photo from Folder (Phone / Laptop / Computer):
+            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--teal-300)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={16} /> Profile Picture Options & Email Avatar:
             </div>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={handleUseGravatar}
+                className="btn btn-teal btn-sm"
+                style={{ gap: 6, background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' }}
+                title="Use Gravatar linked to your email address"
+              >
+                <Mail size={15} />
+                <span>Use Email Profile Picture (Gravatar)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleUseUnavatar}
+                className="btn btn-teal btn-sm"
+                style={{ gap: 6, background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)' }}
+                title="Fetch profile picture associated with your email"
+              >
+                <Sparkles size={15} />
+                <span>Use Social Email Avatar</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="btn btn-teal btn-sm"
-                style={{ gap: 8 }}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: 6, color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
               >
-                <Upload size={16} />
-                <span>Select & Crop Photo from Device</span>
+                <Upload size={15} />
+                <span>Upload & Crop Local Photo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowUrlInput(!showUrlInput)}
+                className="btn btn-secondary btn-sm"
+                style={{ gap: 6, color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+              >
+                <LinkIcon size={15} />
+                <span>Image Link URL</span>
               </button>
 
               {formData.avatar && (
@@ -446,16 +501,37 @@ export default function Profile() {
                   type="button"
                   onClick={handleRemovePhoto}
                   className="btn btn-secondary btn-sm"
-                  style={{ gap: 8, color: '#f87171', borderColor: 'rgba(248,113,113,0.4)', background: 'rgba(239,68,68,0.1)' }}
+                  style={{ gap: 6, color: '#f87171', borderColor: 'rgba(248,113,113,0.4)', background: 'rgba(239,68,68,0.1)' }}
                 >
-                  <Trash2 size={16} />
-                  <span>Remove Photo (Use Username Initials)</span>
+                  <Trash2 size={15} />
+                  <span>Remove Photo</span>
                 </button>
               )}
             </div>
 
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: 8 }}>
-              💡 Select any photo file from your phone, laptop, or computer folder. You can drag and zoom to fit the exact circular frame before saving.
+            {/* Custom URL Input popdown */}
+            {showUrlInput && (
+              <div style={{ marginTop: 12, display: 'flex', gap: 8, maxWidth: 500 }}>
+                <input
+                  type="url"
+                  placeholder="https://example.com/my-photo.jpg"
+                  value={customUrlInput}
+                  onChange={e => setCustomUrlInput(e.target.value)}
+                  className="form-control"
+                  style={{ background: 'rgba(255,255,255,0.1)', color: 'white', borderColor: 'rgba(255,255,255,0.3)' }}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCustomUrl}
+                  className="btn btn-teal btn-sm"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+
+            <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', marginTop: 10 }}>
+              💡 You can automatically load your Email Profile Picture (Gravatar), upload a photo file from your phone/computer, or enter a photo web link.
             </div>
           </div>
         )}
@@ -507,7 +583,7 @@ export default function Profile() {
 
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <button onClick={handleStartEditing} className="btn btn-teal">
-              <Edit2 size={16} /> Edit Profile Details
+              <Edit2 size={16} /> Edit Profile Details & Picture
             </button>
           </div>
         </div>
@@ -587,32 +663,45 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Profile Photo Device Upload Option */}
-            <div className="form-group" style={{ marginBottom: 24 }}>
-              <label className="form-label">Profile Photo Selection</label>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* Profile Photo Quick Selection Card */}
+            <div className="form-group" style={{ marginBottom: 24, padding: 16, background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
+                <Camera size={18} style={{ color: 'var(--teal-600)' }} /> Profile Picture Selection
+              </label>
+
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={handleUseGravatar}
+                  className="btn btn-teal btn-sm"
+                  style={{ gap: 6 }}
+                >
+                  <Mail size={15} /> Use Email Profile Picture (Gravatar)
+                </button>
+
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="btn btn-secondary"
-                  style={{ gap: 8 }}
+                  className="btn btn-secondary btn-sm"
+                  style={{ gap: 6 }}
                 >
-                  <Upload size={16} /> Select & Crop Photo from Folder
+                  <Upload size={15} /> Choose Photo from Device
                 </button>
 
                 {formData.avatar && (
                   <button
                     type="button"
                     onClick={handleRemovePhoto}
-                    className="btn btn-secondary"
-                    style={{ gap: 8, color: 'var(--error-600)' }}
+                    className="btn btn-secondary btn-sm"
+                    style={{ gap: 6, color: 'var(--error-600)' }}
                   >
-                    <Trash2 size={16} /> Remove Photo (Use Initials)
+                    <Trash2 size={15} /> Reset Photo
                   </button>
                 )}
               </div>
-              <small style={{ color: 'var(--gray-500)', display: 'block', marginTop: 8 }}>
-                Select an image file from your phone, laptop, or computer folder. You can drag and crop the photo to fit the circular profile frame.
+
+              <small style={{ color: 'var(--gray-600)', display: 'block', marginTop: 10 }}>
+                Clicking <strong>Use Email Profile Picture</strong> will automatically fetch your Gravatar avatar linked to <em>{user?.email}</em>. You can also select any photo from your phone or PC.
               </small>
             </div>
 
@@ -643,81 +732,6 @@ export default function Profile() {
               </button>
             </div>
           </form>
-        </div>
-      )}
-
-      {/* FULL SIZE IMAGE LIGHTBOX MODAL */}
-      {showLightbox && (
-        <div
-          className="fade-in"
-          onClick={() => setShowLightbox(false)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            zIndex: 9999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-            backdropFilter: 'blur(8px)'
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center'
-            }}
-          >
-            <button
-              onClick={() => setShowLightbox(false)}
-              style={{
-                position: 'absolute',
-                top: -44,
-                right: 0,
-                background: 'rgba(255, 255, 255, 0.25)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              title="Close image view"
-            >
-              <X size={22} />
-            </button>
-
-            <img
-              src={lightboxSrc}
-              alt="Profile Photo Full View"
-              style={{
-                maxWidth: '340px',
-                maxHeight: '340px',
-                width: '80vw',
-                height: '80vw',
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '4px solid var(--teal-400)',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.6)'
-              }}
-            />
-            <div style={{ color: 'white', marginTop: 16, fontSize: '0.95rem', fontWeight: 600 }}>
-              {user?.name}'s Profile Picture
-            </div>
-          </div>
         </div>
       )}
 
@@ -902,7 +916,7 @@ export default function Profile() {
             </button>
 
             <img
-              src={getHDAvatarUrl(lightboxSrc)}
+              src={lightboxSrc}
               alt={`${user?.name}'s Profile Picture`}
               style={{
                 maxWidth: '340px',

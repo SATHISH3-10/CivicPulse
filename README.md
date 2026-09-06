@@ -1,64 +1,61 @@
 # CivicPulse AI
 
-Smart civic complaint reporting and resolution platform for citizens, municipal officers, and administrators.
+An AI-assisted civic complaint reporting and municipal operations platform for Chennai. CivicPulse connects a citizen report to AI triage, department dispatch, field repair, and resolution verification.
 
-## Overview
+`Citizen report → AI analysis → department dispatch → field resolution → citizen verification`
 
-CivicPulse connects the full complaint lifecycle:
+## What it does
 
-`Citizen report -> AI analysis -> department dispatch -> officer resolution -> citizen verification`
+CivicPulse supports photo- and location-based issue reporting, automatic category and priority recommendations, SLA deadlines, duplicate detection, complaint timelines, notifications, officer dispatch, city analytics, and hotspot detection.
 
-The application supports location-based reports, evidence uploads, duplicate detection, priority and SLA calculation, complaint timelines, officer assignment, notifications, hotspot analysis, and administrative analytics.
+### Citizen space — `/citizen/*`
 
-## Features
+- Dashboard with report, in-progress, resolved, and verification statistics, recent activity, and issue-proof map viewer.
+- Report issues with photo evidence, geolocation, AI category/priority/SLA recommendations, and duplicate checks.
+- Track complaints with status badges, live SLA countdowns, evidence, timelines, and verification feedback.
+- Explore nearby complaints on the civic map and manage ward/profile details with circular image crop, Gravatar, or Unavatar.
 
-### Citizens
-- Register and sign in
-- Report an issue with category, description, location, and evidence
-- View complaints, status history, nearby complaints, and notifications
-- Support other complaints
-- Verify or reject a submitted resolution and provide feedback
+### Field officer space — `/officer/*`
 
-### Field officers
-- View assigned complaints and nearby department complaints
-- Claim eligible complaints
-- Update complaint status
-- Upload before and after evidence
-- Track SLA deadlines and officer statistics
+- Field dashboard with workload, P1 alerts, breached SLAs, department, and ward information.
+- Priority-sorted work orders with live SLA indicators and one-tap Claim or In Progress actions.
+- Route map with numbered pins for assigned work across the officer's ward.
+- Work-order repair notes, status progression, before/after evidence uploads, and completion workflow.
 
-### Administrators
-- View city-wide complaint analytics
-- Review live complaint locations and hotspots
-- Inspect department performance
-- Search and filter complaints
-- Assign departments and officers
+### Municipal admin space — `/admin/*`
+
+- Command center for complaint volume, SLA compliance, P1 alerts, department breakdown, and resolution speed.
+- User and team directory with search, role filtering, and officer permit assignment.
+- City-wide master complaint desk with assignment and re-dispatch controls.
+- Live command map, department management, analytics, and AI hotspots for preventive maintenance.
 
 ## Technology
 
-- Frontend: React 18, Vite, React Router, Leaflet, Chart.js, Lucide React
+- Frontend: React 18, Vite, React Router, Leaflet/OpenStreetMap, Chart.js, Lucide React
 - Backend: Node.js, Express, JWT authentication, role-based access control
-- Database: Supabase using PostgreSQL JSONB document tables
-- AI: Local deterministic rule-based analysis engine
+- Database: Supabase (PostgreSQL JSONB document tables)
+- AI: local deterministic rule-based analysis engine
 
-## Project Structure
+## Project structure
 
 ```text
-Hacksparo/
+CivicPulse/
 ├── client/                 React/Vite frontend
+│   ├── public/             Static and demo evidence assets
 │   └── src/
 │       ├── components/     Shared UI components
-│       ├── context/        Auth, language, and toast providers
-│       ├── layouts/        Dashboard layout
-│       └── pages/          Landing, citizen, officer, and admin views
+│       ├── context/        Authentication, language, and toast providers
+│       ├── layouts/        Role-aware dashboard shell
+│       └── pages/          Citizen, officer, admin, and public views
 ├── server/                 Express API
 │   ├── controllers/        Request handlers
-│   ├── db/                 Supabase client, adapter, and seed script
+│   ├── db/                 Supabase client, adapter, schema, and seed script
 │   ├── middleware/         Authentication and role checks
 │   ├── models/             Supabase-backed model interfaces
 │   ├── routes/             API route definitions
 │   └── services/           AI analysis engine
-├── server/supabase-schema.sql
-└── .env.example
+├── .env.example
+└── package.json
 ```
 
 ## Requirements
@@ -69,37 +66,31 @@ Hacksparo/
 
 ## Setup
 
-### 1. Create the Supabase tables
+### 1. Create the database tables
 
-Open the Supabase SQL Editor and run [server/supabase-schema.sql](server/supabase-schema.sql).
-
-The backend uses the Supabase service-role key. Keep this key on the server and never expose it in the React client.
+In the Supabase SQL Editor, run [server/supabase-schema.sql](server/supabase-schema.sql).
 
 ### 2. Configure environment variables
 
-Copy `.env.example` to `.env` in the repository root and set:
+Copy `.env.example` to `.env` at the repository root and supply your values:
 
 ```env
+PORT=5000
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 JWT_SECRET=use-a-long-random-secret
 JWT_EXPIRES_IN=24h
-PORT=5000
-```
 
-Create `client/.env` from [client/.env.example](client/.env.example) and set the same Supabase project URL plus the frontend publishable key:
-
-```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com
 ```
 
-Enable Google as a provider in Supabase. In Google Cloud Console, add your frontend origins (for example `http://localhost:5173`) to the OAuth web client configured in `VITE_GOOGLE_CLIENT_ID`.
+Keep `SUPABASE_SERVICE_ROLE_KEY` private: it is used only by the Express server. `MONGODB_URI` remains in the example file for legacy compatibility but is not used by the application.
+
+For Google login, enable Google in Supabase Authentication and add `http://localhost:5173` as an authorized JavaScript origin in Google Cloud Console.
 
 ### 3. Install dependencies
-
-From the repository root:
 
 ```bash
 npm run install-all
@@ -111,59 +102,71 @@ npm run install-all
 npm run seed
 ```
 
-The seed command creates demo users, departments, officers, complaints, timelines, evidence, feedback, and notifications.
+The seed includes departments, officers, complaints, evidence, timelines, feedback, and notifications. It can be run repeatedly without replacing existing demo data.
 
-## Run the application
+## Run locally
 
-Start both frontend and backend:
+Start frontend and backend together:
 
 ```bash
 npm run dev
 ```
 
-Or run them separately:
+Or start them in separate terminals:
 
 ```bash
-# Terminal 1
+# Terminal 1 — API and Supabase connection
 npm run server
 
-# Terminal 2
+# Terminal 2 — React app
 npm run client
 ```
 
-URLs:
+Open `http://localhost:5173`.
 
-- Frontend: http://localhost:5173
-- API: http://localhost:5000
-- Health check: http://localhost:5000/api/health
+| Service | URL |
+|---|---|
+| Frontend | `http://localhost:5173` |
+| Express API | `http://localhost:5000` |
+| API health check | `http://localhost:5000/api/health` |
+
+Vite proxies frontend `/api` calls to the Express server on port `5000`. On startup, the API terminal should print `Supabase connected`.
+
+If port `5173` is already used, either open the existing app or run:
+
+```bash
+cd client
+npm run dev -- --port 5174
+```
 
 ## Demo accounts
 
-All demo accounts use the password `password123`.
+All seeded accounts use `password123`.
 
 | Role | Email |
 |---|---|
-| Citizen | `citizen@civicpulse.demo` |
-| Field officer | `officer@civicpulse.demo` |
-| Administrator | `admin@civicpulse.demo` |
+| Citizen | `citi@123` |
+| Field officer | `off@123` |
+| Administrator | `admin@123` |
+
+The configured municipal authority email is enforced as an administrator by the server during email and Google login.
 
 ## API summary
 
-All protected endpoints require `Authorization: Bearer <token>`.
+Protected endpoints require `Authorization: Bearer <token>`.
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
-| Complaints | `GET /api/complaints`, `POST /api/complaints`, `GET /api/complaints/:id` |
-| Complaint workflow | `PUT /api/complaints/:id`, timeline, evidence, verification, feedback, support |
-| Officer | `GET /api/officer/complaints`, stats, status, claim, evidence |
-| Admin | analytics, hotspots, departments, complaints, officers, assignment |
+| Authentication | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me` |
+| Complaints | `GET/POST /api/complaints`, `GET/PUT /api/complaints/:id` |
+| Complaint workflow | Timeline, evidence, verification, feedback, and support endpoints |
+| Field officer | Work orders, stats, claiming, status updates, and repair evidence |
+| Admin | Analytics, hotspots, departments, users, officers, complaints, and assignment |
 | AI | `POST /api/ai/analyze`, `POST /api/ai/detect-duplicate` |
-| Notifications | list, mark one read, mark all read |
+| Notifications | List, mark one read, and mark all read |
 
 ## Notes
 
-- The application stores documents as JSONB records in separate Supabase tables while retaining the existing model-style server API.
-- Uploaded files are served from `server/uploads`; demo evidence assets are served from the client public directory.
-- The AI service is local and deterministic, so the demo does not require an external AI provider.
-- Google Identity Services obtains an ID token in the frontend and passes it to Supabase with `signInWithIdToken`, then the app exchanges the resulting verified Supabase access token for its existing CivicPulse JWT. No Supabase OAuth redirect URL is used.
+- Documents are stored as JSONB records in Supabase while the server retains a model-style API.
+- Demo evidence is in `client/public/demo`; uploaded files are served from `server/uploads`.
+- The AI service is local and deterministic, so no third-party AI key is required.

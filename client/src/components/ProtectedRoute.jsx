@@ -18,8 +18,10 @@ export default function ProtectedRoute({ children, roles, allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRoles && Array.isArray(requiredRoles) && !requiredRoles.includes(user.role)) {
-    const authorizedDashboard = getRoleDashboard(user.role);
+  const userRole = (user?.role || 'citizen').toLowerCase();
+
+  if (requiredRoles && Array.isArray(requiredRoles) && !requiredRoles.includes(userRole)) {
+    const authorizedDashboard = getRoleDashboard(userRole);
     return <Navigate to={authorizedDashboard} replace />;
   }
 

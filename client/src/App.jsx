@@ -20,6 +20,8 @@ import CivicMap from './pages/citizen/CivicMap.jsx';
 // Officer Pages
 import OfficerDashboard from './pages/officer/Dashboard.jsx';
 import OfficerComplaintDetail from './pages/officer/ComplaintDetail.jsx';
+import OfficerWorkOrders from './pages/officer/WorkOrders.jsx';
+import OfficerRouteMap from './pages/officer/RouteMap.jsx';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard.jsx';
@@ -72,9 +74,10 @@ export default function App() {
                 }
               >
                 <Route index element={<OfficerDashboard />} />
-                <Route path="complaints" element={<OfficerDashboard />} />
-                <Route path="assignments" element={<OfficerDashboard />} />
+                <Route path="complaints" element={<OfficerWorkOrders />} />
+                <Route path="assignments" element={<Navigate to="/officer/complaints" replace />} />
                 <Route path="complaints/:id" element={<OfficerComplaintDetail />} />
+                <Route path="map" element={<OfficerRouteMap />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
 

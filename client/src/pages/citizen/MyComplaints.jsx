@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api.js';
 import { StatusBadge, PriorityBadge, formatDate, CATEGORIES } from '../../components/shared.jsx';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Timer } from 'lucide-react';
+
+function SLATimer({ deadline, status }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => { const interval = setInterval(() => setNow(Date.now()), 60000); return () => clearInterval(interval); }, []);
+  if (!deadline || status === 'resolved') return null;
+  const difference = new Date(deadline).getTime() - now;
+  const hours = Math.floor(Math.abs(difference) / 3600000);
+  const minutes = Math.floor((Math.abs(difference) % 3600000) / 60000);
+  return <span style={{ color: difference < 0 ? 'var(--error-600)' : hours < 8 ? 'var(--warning-600)' : 'var(--success-600)', fontWeight: 700 }}><Timer size={14} /> {difference < 0 ? `SLA breached ${hours}h ago` : `SLA: ${hours}h ${minutes}m remaining`}</span>;
+}
 
 export default function MyComplaints() {
   const [complaints, setComplaints] = useState([]);
@@ -56,6 +66,7 @@ export default function MyComplaints() {
                 <span>📍 {c.address || 'Location tagged'}</span>
                 <span>🏢 {c.departmentId?.name || 'Pending'}</span>
                 <span>📅 {formatDate(c.createdAt)}</span>
+                <SLATimer deadline={c.slaDeadline} status={c.status} />
               </div>
             </Link>
           ))}

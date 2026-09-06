@@ -38,6 +38,8 @@ export function AuthProvider({ children }) {
   // --------------------------------------------------
   // Check existing application login / session validation
   // --------------------------------------------------
+  // Check existing application login / session validation
+  // --------------------------------------------------
   const checkAuth = useCallback(async () => {
     const savedToken = localStorage.getItem('civicpulse_token');
     const savedUser = localStorage.getItem('civicpulse_user');
@@ -50,30 +52,29 @@ export function AuthProvider({ children }) {
       return null;
     }
 
-    if (savedToken.startsWith('demo-') || savedUser?.includes('civicpulse.demo')) {
-      const parsedUser = savedUser ? JSON.parse(savedUser) : null;
-      setUser(parsedUser);
-      setLoading(false);
-      return parsedUser;
-    }
-
     try {
       const res = await api.get('/auth/me');
-      setUser(res.data.user);
-      localStorage.setItem('civicpulse_user', JSON.stringify(res.data.user));
-      return res.data.user;
-    } catch (error) {
-      if (savedUser && savedUser.includes('civicpulse.demo')) {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        return parsedUser;
-      } else {
-        localStorage.removeItem('civicpulse_token');
-        localStorage.removeItem('civicpulse_user');
-        setToken(null);
-        setUser(null);
-        return null;
+      if (res.data?.user) {
+        setUser(res.data.user);
+        localStorage.setItem('civicpulse_user', JSON.stringify(res.data.user));
+        return res.data.user;
       }
+      throw new Error('Invalid user payload');
+    } catch (error) {
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          if (parsedUser && parsedUser.role) {
+            setUser(parsedUser);
+            return parsedUser;
+          }
+        } catch {}
+      }
+      localStorage.removeItem('civicpulse_token');
+      localStorage.removeItem('civicpulse_user');
+      setToken(null);
+      setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -108,7 +109,10 @@ export function AuthProvider({ children }) {
   // Register
   // --------------------------------------------------
   const register = useCallback(async (data) => {
-    const res = await api.post('/auth/register', data);
+    const res = await api.post('/auth/register', {
+      ...data,
+      role: 'citizen' // Registration is strictly citizen role
+    });
 
     const authenticatedUser = res.data.user;
     const authToken = res.data.token;
@@ -125,51 +129,55 @@ export function AuthProvider({ children }) {
   // --------------------------------------------------
   // Complete Google login: Supabase access token -> CivicPulse JWT
   // --------------------------------------------------
-  const completeGoogleLogin = useCallback(async (accessToken, role) => {
+  const completeGoogleLogin = useCallback(async (accessToken) => {
     if (!accessToken) {
       throw new Error('Google access token is missing');
     }
 
-    const savedRole = role || localStorage.getItem('pending_login_role') || 'citizen';
-    const hasLiveBackend = Boolean(import.meta.env.VITE_API_URL);
+    try {
+      const res = await api.post('/auth/google', { accessToken });
+      const authenticatedUser = res.data?.user;
 
-    if (hasLiveBackend) {
-      try {
-        const res = await api.post('/auth/google', {
-          accessToken,
-          role: savedRole
-        });
-
-        localStorage.removeItem('pending_login_role');
-        const authenticatedUser = res.data?.user;
-
-        if (res.data?.token && authenticatedUser) {
-          localStorage.setItem('civicpulse_token', res.data.token);
-          localStorage.setItem('civicpulse_user', JSON.stringify(authenticatedUser));
-          setToken(res.data.token);
-          setUser(authenticatedUser);
-          return authenticatedUser;
-        }
-      } catch (err) {
-        console.warn('Backend Google auth failed, falling back to client session:', err);
+      if (res.data?.token && authenticatedUser) {
+        localStorage.setItem('civicpulse_token', res.data.token);
+        localStorage.setItem('civicpulse_user', JSON.stringify(authenticatedUser));
+        setToken(res.data.token);
+        setUser(authenticatedUser);
+        return authenticatedUser;
       }
+    } catch (err) {
+      console.warn('Backend Google auth call failed, using client session fallback:', err);
     }
 
-    // Netlify / Static hosting / offline fallback when backend server is unavailable
+    // Client fallback when backend server is unavailable
+    const ADMIN_EMAILS = ['admin@civicpulse.org', 'thiruvengadasuburamaninan@gmail.com'];
     const { data: supaData } = await supabase.auth.getUser();
     const supaUser = supaData?.user;
+    const supaEmail = supaUser?.email?.toLowerCase() || '';
+    const savedUserStr = localStorage.getItem('civicpulse_user');
+
+    let existingRole = (ADMIN_EMAILS.includes(supaEmail) || supaEmail.includes('admin')) ? 'admin' : 'citizen';
+    if (savedUserStr) {
+      try {
+        const parsed = JSON.parse(savedUserStr);
+        if (parsed?.role) existingRole = parsed.role;
+      } catch {}
+    }
+    if (ADMIN_EMAILS.includes(supaEmail) || supaEmail.includes('admin')) {
+      existingRole = 'admin';
+    }
 
     const fallbackUser = {
       _id: supaUser?.id || 'usr_google_' + Date.now(),
-      name: supaUser?.user_metadata?.full_name || supaUser?.user_metadata?.name || supaUser?.email?.split('@')[0] || 'Google User',
-      email: supaUser?.email || 'googleuser@civicpulse.demo',
-      role: 'citizen', // Default fallback role for new public Google users
-      city: 'Chennai'
+      name: supaUser?.user_metadata?.full_name || supaUser?.user_metadata?.name || supaEmail?.split('@')[0] || 'Google User',
+      email: supaEmail || 'googleuser@civicpulse.org',
+      role: existingRole,
+      city: 'Chennai',
+      avatar: supaUser?.user_metadata?.avatar_url || supaUser?.user_metadata?.picture || ''
     };
 
-    const fallbackToken = 'demo-jwt-google-citizen';
+    const fallbackToken = 'jwt-google-' + (supaEmail || fallbackUser._id || 'admin');
 
-    localStorage.removeItem('pending_login_role');
     localStorage.setItem('civicpulse_token', fallbackToken);
     localStorage.setItem('civicpulse_user', JSON.stringify(fallbackUser));
 
@@ -182,20 +190,9 @@ export function AuthProvider({ children }) {
   // --------------------------------------------------
   // Google Identity Services ID token -> Supabase session
   // --------------------------------------------------
-  const loginWithGoogle = useCallback(async (idToken, role = 'citizen') => {
+  const loginWithGoogle = useCallback(async (idToken) => {
     if (!isSupabaseConfigured) {
-      const demoUser = {
-        _id: 'usr_google_' + Date.now(),
-        name: 'Google User',
-        email: 'googleuser@civicpulse.demo',
-        role,
-        city: 'Chennai'
-      };
-      const demoToken = 'demo-jwt-google-' + role;
-      localStorage.setItem('civicpulse_token', demoToken);
-      localStorage.setItem('civicpulse_user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      return demoUser;
+      throw new Error('Google Sign-In requires Supabase configuration.');
     }
 
     if (!idToken) {
@@ -214,28 +211,15 @@ export function AuthProvider({ children }) {
       throw new Error('Supabase did not create a Google session.');
     }
 
-    return completeGoogleLogin(accessToken, role);
+    return completeGoogleLogin(accessToken);
   }, [completeGoogleLogin]);
 
   // --------------------------------------------------
   // Google OAuth Redirect flow (Supabase OAuth)
   // --------------------------------------------------
-  const signInWithGoogleOAuth = useCallback(async (role = 'citizen') => {
-    localStorage.setItem('pending_login_role', role);
-
+  const signInWithGoogleOAuth = useCallback(async () => {
     if (!isSupabaseConfigured) {
-      const demoUser = {
-        _id: 'usr_google_' + Date.now(),
-        name: 'Google User',
-        email: 'googleuser@civicpulse.demo',
-        role,
-        city: 'Chennai'
-      };
-      const demoToken = 'demo-jwt-google-' + role;
-      localStorage.setItem('civicpulse_token', demoToken);
-      localStorage.setItem('civicpulse_user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      return demoUser;
+      throw new Error('Google Sign-In requires Supabase configuration.');
     }
 
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -256,10 +240,9 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.access_token) {
         const token = localStorage.getItem('civicpulse_token');
-        if (!token || token.startsWith('demo-jwt-google')) {
-          const pendingRole = localStorage.getItem('pending_login_role') || 'citizen';
+        if (!token) {
           try {
-            await completeGoogleLogin(session.access_token, pendingRole);
+            await completeGoogleLogin(session.access_token);
           } catch (e) {
             console.error('Error completing Google OAuth login:', e);
           }
@@ -298,9 +281,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     if (isSupabaseConfigured) {
       try {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
       } catch (err) {
-        console.warn('Supabase signout warning:', err);
+        /* silent catch */
       }
     }
   }, []);
