@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
+import { signInWithGoogleOAuth } from '../lib/supabase.js';
 
 export default function Login() {
   const { user, isAuthenticated, login, loginWithGoogle } = useAuth();

@@ -20,4 +20,19 @@ export const supabase = createClient(url, publishableKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true
   }
-});
+});
+
+export async function signInWithGoogleOAuth() {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase client credentials are missing. Please configure VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
+  }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/login`
+    }
+  });
+  if (error) throw error;
+  return data;
+}
+
