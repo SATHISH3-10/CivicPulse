@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Eye, EyeOff, ArrowLeft, User, Wrench, Building2, ChevronRight, RotateCcw } from 'lucide-react';
 
 export default function Login() {
-  const { login, loginWithGoogle, signInWithGoogleOAuth } = useAuth();
+  const { user, isAuthenticated, login, loginWithGoogle, signInWithGoogleOAuth } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+
+  // If user is already authenticated, redirect to their authorized role dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role) {
+      navigate(getRoleDashboard(user.role), { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   // Selected role state: null initially (step 1), or 'citizen' | 'officer' | 'admin' (step 2)
   const [selectedRole, setSelectedRole] = useState(null);
@@ -59,8 +66,7 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password);
       addToast(`Welcome back, ${user.name}!`, 'success');
-      const routes = { citizen: '/citizen', officer: '/officer', admin: '/admin' };
-      navigate(routes[user.role] || '/citizen');
+      navigate(getRoleDashboard(user.role));
     } catch (err) {
       addToast(err.response?.data?.error || 'Login failed', 'error');
     } finally {
@@ -74,8 +80,7 @@ export default function Login() {
     try {
       const user = await login(email, 'password123');
       addToast(`Welcome, ${user.name}! (Demo Mode)`, 'success');
-      const routes = { citizen: '/citizen', officer: '/officer', admin: '/admin' };
-      navigate(routes[user.role] || '/citizen');
+      navigate(getRoleDashboard(user.role));
     } catch (err) {
       addToast(err.response?.data?.error || 'Demo login failed. Please verify seed data.', 'error');
     } finally {
@@ -90,8 +95,7 @@ export default function Login() {
       const user = await signInWithGoogleOAuth(targetRole);
       if (user && user.role) {
         addToast(`Welcome, ${user.name}!`, 'success');
-        const routes = { citizen: '/citizen', officer: '/officer', admin: '/admin' };
-        navigate(routes[user.role] || '/citizen');
+        navigate(getRoleDashboard(user.role));
       }
     } catch (err) {
       console.error('Google login error:', err);
@@ -125,8 +129,7 @@ export default function Login() {
               selectedRoleRef.current || 'citizen'
             );
             addToast(`Welcome, ${user.name}!`, 'success');
-            const routes = { citizen: '/citizen', officer: '/officer', admin: '/admin' };
-            navigate(routes[user.role] || '/citizen');
+            navigate(getRoleDashboard(user.role));
           } catch (err) {
             console.error('Google login error:', err);
             addToast(err.message || 'Google login failed', 'error');
@@ -390,7 +393,16 @@ export default function Login() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.875rem', color: 'var(--gray-600)', cursor: 'pointer' }}>
                   <input type="checkbox" defaultChecked /> Remember me
                 </label>
-                <a href="#" style={{ fontSize: '0.875rem' }}>Forgot password?</a>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    addToast('For password reset, please contact your municipal administrator or check your registered email.', 'info');
+                  }}
+                  style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.875rem', color: 'var(--teal-600)', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Forgot password?
+                </button>
               </div>
 
               <button className="btn btn-primary btn-lg w-full" type="submit" disabled={loading} style={{ background: roleMeta[selectedRole].color, borderColor: roleMeta[selectedRole].color }}>

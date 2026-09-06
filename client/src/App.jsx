@@ -49,7 +49,7 @@ export default function App() {
               <Route
                 path="/citizen"
                 element={
-                  <ProtectedRoute roles={['citizen']}>
+                  <ProtectedRoute allowedRoles={['citizen']}>
                     <DashboardLayout />
                   </ProtectedRoute>
                 }
@@ -66,13 +66,14 @@ export default function App() {
               <Route
                 path="/officer"
                 element={
-                  <ProtectedRoute roles={['officer']}>
+                  <ProtectedRoute allowedRoles={['officer']}>
                     <DashboardLayout />
                   </ProtectedRoute>
                 }
               >
                 <Route index element={<OfficerDashboard />} />
                 <Route path="complaints" element={<OfficerDashboard />} />
+                <Route path="assignments" element={<OfficerDashboard />} />
                 <Route path="complaints/:id" element={<OfficerComplaintDetail />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
@@ -81,7 +82,7 @@ export default function App() {
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute roles={['admin']}>
+                  <ProtectedRoute allowedRoles={['admin']}>
                     <DashboardLayout />
                   </ProtectedRoute>
                 }
@@ -93,6 +94,7 @@ export default function App() {
                 <Route path="departments" element={<AdminDepartments />} />
                 <Route path="hotspots" element={<AdminHotspots />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="officers" element={<AdminUsers />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
 

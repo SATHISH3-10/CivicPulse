@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 
-export default function ProtectedRoute({ children, roles }) {
+export default function ProtectedRoute({ children, roles, allowedRoles }) {
   const { user, loading, isAuthenticated } = useAuth();
+
+  const requiredRoles = allowedRoles || roles;
 
   if (loading) {
     return (
@@ -12,10 +14,13 @@ export default function ProtectedRoute({ children, roles }) {
     );
   }
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) {
-    const redirectMap = { citizen: '/citizen', officer: '/officer', admin: '/admin' };
-    return <Navigate to={redirectMap[user.role] || '/'} replace />;
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRoles && Array.isArray(requiredRoles) && !requiredRoles.includes(user.role)) {
+    const authorizedDashboard = getRoleDashboard(user.role);
+    return <Navigate to={authorizedDashboard} replace />;
   }
 
   return children;

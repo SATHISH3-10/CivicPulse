@@ -201,7 +201,7 @@ export async function googleLogin(req, res) {
         name: googleName,
         avatar: googleAvatar,
         passwordHash: await bcrypt.hash(randomUUID(), 10),
-        role: targetRole,
+        role: 'citizen', // New public registrations are strictly defaulted to 'citizen'
         city: 'Chennai',
         district: 'Chennai',
         area: 'Anna Nagar',
@@ -220,7 +220,7 @@ export async function googleLogin(req, res) {
       }
       if (googleName && (!user.name || user.name === 'User' || user.name === email.split('@')[0])) updates.name = googleName;
       if (email && user.email !== email) updates.email = email;
-      if (role && ['citizen', 'officer', 'admin'].includes(role)) updates.role = role;
+      // Note: Existing user DB role (user.role) is strictly retained and never overwritten from client input
 
       if (Object.keys(updates).length > 0) {
         user = await User.findOneAndUpdate({ _id: user._id }, updates, { new: true });
