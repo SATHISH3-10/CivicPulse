@@ -47,10 +47,20 @@ export default function MyComplaints() {
       {loading ? (
         <div>{[1,2,3].map(i => <div key={i} className="skeleton skeleton-card" style={{ marginBottom: 12 }} />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-title">No complaints found</div>
-          <div className="empty-state-text">Try changing the filter or report a new issue.</div>
-          <Link to="/citizen/report" className="btn btn-teal mt-4">Report Issue</Link>
+        <div className="card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📋</div>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: 'var(--gray-900)' }}>No Personal Complaints Yet</h3>
+          <p style={{ color: 'var(--gray-600)', maxWidth: 460, margin: '0 auto 24px', fontSize: '0.9rem' }}>
+            You haven't filed any complaints under this account yet. You can submit a new civic issue or view citywide public complaints on the live map.
+          </p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/citizen/report" className="btn btn-teal">
+              + Report New Issue
+            </Link>
+            <Link to="/citizen/map" className="btn btn-secondary">
+              🗺️ View All 27 Citywide Complaints on Map
+            </Link>
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
