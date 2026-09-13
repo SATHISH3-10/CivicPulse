@@ -17,6 +17,7 @@ export default function ComplaintDetail() {
   const [verifying, setVerifying] = useState(false);
   const [rating, setRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [reopenReason, setReopenReason] = useState('');
   const [showReport, setShowReport] = useState(false);
 
@@ -29,7 +30,11 @@ export default function ComplaintDetail() {
     try {
       const res = await api.get(`/complaints/${id}`);
       setData(res.data);
-      if (res.data.feedback) { setRating(res.data.feedback.rating); setFeedbackComment(res.data.feedback.comment); }
+      if (res.data.feedback) {
+        setRating(res.data.feedback.rating);
+        setFeedbackComment(res.data.feedback.comment);
+        setFeedbackSubmitted(true);
+      }
     } catch (e) { addToast('Failed to load complaint', 'error'); }
     finally { setLoading(false); }
   }
@@ -93,7 +98,9 @@ export default function ComplaintDetail() {
     if (!rating) { addToast('Please select a rating', 'warning'); return; }
     try {
       await api.post(`/complaints/${id}/feedback`, { rating, comment: feedbackComment });
+      setFeedbackSubmitted(true);
       addToast('Thank you for your feedback!', 'success');
+      loadData();
     } catch (e) { addToast('Feedback failed', 'error'); }
   }
 
@@ -256,20 +263,39 @@ export default function ComplaintDetail() {
         </div>
       )}
 
-      {/* Satisfaction Rating */}
+      {/* Satisfaction Rating & Confirmation */}
       {complaint.status === 'resolved' && (
-        <div className="card" style={{ marginBottom: 20 }}>
-          <h3 style={{ marginBottom: 12 }}>⭐ How satisfied are you with the resolution?</h3>
-          <div className="star-rating" style={{ marginBottom: 16 }}>
-            {[1,2,3,4,5].map(s => (
-              <button key={s} className={s <= rating ? 'active' : ''} onClick={() => setRating(s)}>
-                <Star size={28} fill={s <= rating ? '#FBBF24' : 'none'} />
-              </button>
-            ))}
+        feedbackSubmitted || data?.feedback ? (
+          <div className="card" style={{ marginBottom: 20, borderLeft: '5px solid var(--success-500)', background: 'var(--success-50)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <CheckCircle size={22} style={{ color: 'var(--success-600)' }} />
+              <h3 style={{ margin: 0, color: 'var(--success-900)', fontSize: '1.1rem' }}>Feedback Submitted — Thank You!</h3>
+            </div>
+            <div className="star-rating" style={{ margin: '10px 0', pointerEvents: 'none' }}>
+              {[1, 2, 3, 4, 5].map(s => (
+                <Star key={s} size={24} fill={s <= rating ? '#FBBF24' : 'none'} color={s <= rating ? '#FBBF24' : 'var(--gray-300)'} />
+              ))}
+            </div>
+            {feedbackComment && (
+              <p style={{ color: 'var(--gray-800)', fontSize: '0.9rem', fontStyle: 'italic', marginTop: 4, background: 'white', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--success-100)' }}>
+                "{feedbackComment}"
+              </p>
+            )}
           </div>
-          <textarea className="form-textarea" placeholder="Optional feedback..." value={feedbackComment} onChange={e => setFeedbackComment(e.target.value)} rows={3} style={{ marginBottom: 12 }} />
-          <button className="btn btn-primary" onClick={submitFeedback}>Submit Rating & Feedback</button>
-        </div>
+        ) : (
+          <div className="card" style={{ marginBottom: 20 }}>
+            <h3 style={{ marginBottom: 12 }}>⭐ How satisfied are you with the resolution?</h3>
+            <div className="star-rating" style={{ marginBottom: 16 }}>
+              {[1,2,3,4,5].map(s => (
+                <button key={s} className={s <= rating ? 'active' : ''} onClick={() => setRating(s)}>
+                  <Star size={28} fill={s <= rating ? '#FBBF24' : 'none'} />
+                </button>
+              ))}
+            </div>
+            <textarea className="form-textarea" placeholder="Optional feedback..." value={feedbackComment} onChange={e => setFeedbackComment(e.target.value)} rows={3} style={{ marginBottom: 12 }} />
+            <button className="btn btn-primary" onClick={submitFeedback}>Submit Rating & Feedback</button>
+          </div>
+        )
       )}
 
       {/* Timeline */}
