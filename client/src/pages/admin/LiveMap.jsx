@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../../services/api.js';
 import { CATEGORIES } from '../../components/shared.jsx';
+import { Navigation, Loader2 } from 'lucide-react';
 
 export default function AdminLiveMap() {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
+  const userMarkerRef = useRef(null);
   const [complaints, setComplaints] = useState([]);
   const [filter, setFilter] = useState('all');
   const [stats, setStats] = useState({});
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -22,6 +25,35 @@ export default function AdminLiveMap() {
       setComplaints(cRes.data.complaints);
       setStats(aRes.data.stats || {});
     } catch (e) { console.error(e); }
+  }
+
+  function locateUser() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        if (mapInstance.current) {
+          import('leaflet').then(L => {
+            if (userMarkerRef.current) userMarkerRef.current.remove();
+
+            const userIcon = L.default.divIcon({
+              className: '',
+              html: `<div style="width:22px;height:22px;border-radius:50%;background:#00B4D8;border:3px solid white;box-shadow:0 0 14px #00B4D8;animation:pulse 1.5s infinite;"></div>`,
+              iconSize: [22, 22]
+            });
+
+            userMarkerRef.current = L.default.marker([latitude, longitude], { icon: userIcon }).addTo(mapInstance.current)
+              .bindPopup(`<strong>📍 You Are Here</strong><br/>Accuracy: ~${Math.round(accuracy || 10)}m`).openPopup();
+
+            mapInstance.current.flyTo([latitude, longitude], 15, { duration: 1.5 });
+          });
+        }
+        setLocating(false);
+      },
+      () => { setLocating(false); },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
   }
 
   useEffect(() => {
@@ -65,7 +97,26 @@ export default function AdminLiveMap() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 16, height: 'calc(100vh - 200px)', minHeight: 500 }}>
-        <div ref={mapRef} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--gray-200)' }} />
+        <div style={{ position: 'relative', height: '100%' }}>
+          <div ref={mapRef} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--gray-200)', height: '100%' }} />
+          <button
+            onClick={locateUser}
+            disabled={locating}
+            className="btn btn-white btn-sm"
+            style={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              zIndex: 400,
+              boxShadow: 'var(--shadow-md)',
+              fontWeight: 700,
+              gap: 6
+            }}
+          >
+            {locating ? <Loader2 size={15} className="animate-spin" /> : <Navigation size={15} style={{ color: 'var(--teal-600)' }} />}
+            <span>{locating ? 'Locating...' : 'My Live Location'}</span>
+          </button>
+        </div>
         <div>
           <div className="card" style={{ marginBottom: 12 }}>
             <h4 style={{ fontSize: '0.875rem', marginBottom: 12 }}>Live Statistics</h4>
