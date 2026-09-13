@@ -11,6 +11,7 @@ import {
   Menu, X, User, Settings, BarChart3, Users, Building2, AlertTriangle,
   Map, Flame, ClipboardList, CheckCheck, UserCheck
 } from 'lucide-react';
+import MobileBottomNav from '../components/MobileBottomNav.jsx';
 
 const navigationByRole = {
   citizen: [
@@ -172,6 +173,10 @@ export default function DashboardLayout() {
             <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle Menu">
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+            <div className="mobile-header-brand">
+              <span className="mobile-header-logo">CP</span>
+              <span className="mobile-header-title">CivicPulse AI</span>
+            </div>
           </div>
           <div className="top-header-right">
             <div style={{ position: 'relative' }}>
@@ -220,6 +225,7 @@ export default function DashboardLayout() {
             </div>
 
             <div
+              className="top-header-user-trigger"
               style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
               onClick={() => {
                 const profilePath = userRole === 'admin' ? '/admin/profile' : userRole === 'officer' ? '/officer/profile' : '/citizen/profile';
@@ -264,7 +270,7 @@ export default function DashboardLayout() {
               >
                 {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
-              <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--gray-800)' }}>
+              <span className="header-username" style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--gray-800)' }}>
                 {user?.name || 'User'}
               </span>
             </div>
@@ -274,6 +280,7 @@ export default function DashboardLayout() {
         <div className="content-container">
           <Outlet />
         </div>
+        <MobileBottomNav />
       </main>
     </div>
   );

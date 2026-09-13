@@ -1121,6 +1121,145 @@ tr:last-child td { border-bottom: none; }
 ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
+/* ─── Mobile Bottom Navigation ─── */
+.mobile-bottom-nav {
+  display: none;
+}
+
+.mobile-header-brand {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+.mobile-header-logo {
+  background: var(--primary-600);
+  color: white;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.5px;
+}
+.mobile-header-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gray-900);
+}
+
+@media (max-width: 768px) {
+  .mobile-header-brand {
+    display: flex;
+  }
+
+  .main-content {
+    padding-bottom: 72px; /* space for fixed mobile bottom nav */
+  }
+
+  .header-username {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--gray-200);
+    z-index: 9990;
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .mobile-bottom-nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--gray-500);
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    flex: 1;
+    min-height: 48px;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--primary-600);
+    font-weight: 600;
+  }
+
+  .mobile-nav-icon {
+    transition: transform var(--transition-fast);
+  }
+
+  .mobile-nav-item.active .mobile-nav-icon {
+    transform: translateY(-2px);
+    color: var(--primary-600);
+  }
+
+  .mobile-nav-label {
+    font-size: 0.68rem;
+    line-height: 1;
+  }
+
+  .mobile-nav-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    margin-top: -18px;
+    flex: 1;
+  }
+
+  .mobile-nav-action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal-500), var(--primary-600));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 180, 216, 0.4);
+    border: 3px solid white;
+    transition: transform var(--transition-fast);
+  }
+
+  .mobile-nav-action-btn:active .mobile-nav-action-icon {
+    transform: scale(0.92);
+  }
+
+  .mobile-nav-action-btn .mobile-nav-label {
+    margin-top: 4px;
+    color: var(--teal-700);
+    font-weight: 700;
+  }
+
+  .notification-dropdown {
+    position: fixed !important;
+    top: 64px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+}
+
 /* ─── Print Styles for Municipal Action Report PDF ─── */
 @media print {
   body * {
