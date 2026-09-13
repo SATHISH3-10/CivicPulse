@@ -24,18 +24,12 @@ async function seed() {
 
   const createdUsers = {};
   for (const spec of userSpecs) {
-    let existing = await User.findOne({ email: spec.email.toLowerCase() });
-    if (existing) {
-      existing.name = spec.name;
-      existing.role = spec.role;
-      existing.phone = spec.phone;
-      existing.city = spec.city;
-      await User.findOneAndUpdate({ _id: existing._id }, existing);
-      createdUsers[spec.email] = existing;
-    } else {
-      const newUser = await User.create(spec);
-      createdUsers[spec.email] = newUser;
-    }
+    const emailLower = spec.email.toLowerCase();
+    // Delete any duplicates
+    await User.deleteMany({ email: emailLower });
+    // Create single clean account with password123
+    const newUser = await User.create(spec);
+    createdUsers[spec.email] = newUser;
   }
 
   const citizen = createdUsers['sathishm.ug.24.it@francisxavier.ac.in'];

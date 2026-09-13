@@ -7,6 +7,33 @@ const DEMO_USERS = {
     name: 'Thiruvengadasuburamaninan',
     email: 'thiruvengadasuburamaninan@gmail.com',
     phone: '9876543219',
+    role: 'admin',
+    city: 'Chennai'
+  },
+  'thlruvengadasuburamaninan@gmail.com': {
+    _id: 'usr_thiru',
+    name: 'Thiruvengadasuburamaninan',
+    email: 'thiruvengadasuburamaninan@gmail.com',
+    phone: '9876543219',
+    role: 'admin',
+    city: 'Chennai'
+  },
+  'sathish.kurmbur2006@gmail.com': {
+    _id: 'usr_sathish_officer',
+    name: 'Sathish Officer',
+    email: 'sathish.kurmbur2006@gmail.com',
+    phone: '9876543218',
+    role: 'officer',
+    city: 'Chennai',
+    department: 'Roads & Infrastructure',
+    area: 'Anna Nagar',
+    badgeNumber: 'FO-501'
+  },
+  'sathishm.ug.24.it@francisxavier.ac.in': {
+    _id: 'usr_johan_citizen',
+    name: 'Johan Citizen',
+    email: 'sathishm.ug.24.it@francisxavier.ac.in',
+    phone: '9876543210',
     role: 'citizen',
     city: 'Chennai'
   },
@@ -51,12 +78,139 @@ const now = new Date();
 const d = days => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
 const sla = hours => new Date(now.getTime() + hours * 60 * 60 * 1000).toISOString();
 
-const INITIAL_COMPLAINTS = [];
+const INITIAL_COMPLAINTS = [
+  {
+    _id: 'cmp_101',
+    complaintId: 'CP-2026-101',
+    title: 'Severe Pothole on Anna Nagar 2nd Avenue Main Road',
+    description: 'Deep hazardous pothole near the roundabout causing traffic slowdowns and vehicle damage.',
+    category: 'Roads',
+    subcategory: 'Potholes',
+    severity: 'critical',
+    priority: 'P1',
+    status: 'assigned',
+    latitude: 13.0850,
+    longitude: 80.2101,
+    address: 'Anna Nagar 2nd Avenue, Chennai',
+    district: 'Chennai',
+    area: 'Anna Nagar',
+    citizenId: { _id: 'usr_thiru', name: 'Thiruvengadasuburamaninan', email: 'thiruvengadasuburamaninan@gmail.com' },
+    departmentId: { _id: 'dept_1', name: 'Roads & Infrastructure' },
+    officerId: { _id: 'usr_officer_suresh', name: 'Suresh Babu', email: 'officer1@civicpulse.org' },
+    aiScore: 92,
+    duplicateProbability: 0.1,
+    slaDeadline: sla(12),
+    supportCount: 14,
+    createdAt: d(2),
+    updatedAt: d(1)
+  },
+  {
+    _id: 'cmp_102',
+    complaintId: 'CP-2026-102',
+    title: 'Water Main Pipe Leakage near Pondy Bazaar',
+    description: 'Fresh water leaking continuously from underground pipeline joint onto the street.',
+    category: 'Water',
+    subcategory: 'Pipe Leak',
+    severity: 'high',
+    priority: 'P2',
+    status: 'in_progress',
+    latitude: 13.0418,
+    longitude: 80.2341,
+    address: 'Pondy Bazaar, T. Nagar, Chennai',
+    district: 'Chennai',
+    area: 'T. Nagar',
+    citizenId: { _id: 'usr_citizen_default', name: 'Citizen User', email: 'citizen@civicpulse.org' },
+    departmentId: { _id: 'dept_2', name: 'Water Supply Department' },
+    officerId: { _id: 'usr_officer_suresh', name: 'Suresh Babu', email: 'officer1@civicpulse.org' },
+    aiScore: 88,
+    duplicateProbability: 0.05,
+    slaDeadline: sla(8),
+    supportCount: 9,
+    createdAt: d(3),
+    updatedAt: d(1)
+  },
+  {
+    _id: 'cmp_103',
+    complaintId: 'CP-2026-103',
+    title: 'Broken Streetlight Row on LB Road Adyar',
+    description: 'Five consecutive streetlights are out, creating dark unsafe conditions at night.',
+    category: 'Streetlights',
+    subcategory: 'Outage',
+    severity: 'medium',
+    priority: 'P3',
+    status: 'submitted',
+    latitude: 13.0012,
+    longitude: 80.2565,
+    address: 'Lattice Bridge Road, Adyar, Chennai',
+    district: 'Chennai',
+    area: 'Adyar',
+    citizenId: { _id: 'usr_thiru', name: 'Thiruvengadasuburamaninan', email: 'thiruvengadasuburamaninan@gmail.com' },
+    departmentId: { _id: 'dept_3', name: 'Electrical Department' },
+    aiScore: 75,
+    duplicateProbability: 0,
+    slaDeadline: sla(36),
+    supportCount: 5,
+    createdAt: d(1),
+    updatedAt: d(1)
+  },
+  {
+    _id: 'cmp_104',
+    complaintId: 'CP-2026-104',
+    title: 'Garbage Dump Overflow at Velachery Main Bus Stop',
+    description: 'Municipal trash bin overflowing with domestic waste for over 3 days.',
+    category: 'Garbage',
+    subcategory: 'Overflowing Bin',
+    severity: 'high',
+    priority: 'P2',
+    status: 'resolved',
+    latitude: 12.9815,
+    longitude: 80.2180,
+    address: 'Velachery Bus Terminus Road, Chennai',
+    district: 'Chennai',
+    area: 'Velachery',
+    citizenId: { _id: 'usr_citizen_default', name: 'Citizen User', email: 'citizen@civicpulse.org' },
+    departmentId: { _id: 'dept_4', name: 'Sanitation Department' },
+    officerId: { _id: 'usr_officer_suresh', name: 'Suresh Babu', email: 'officer1@civicpulse.org' },
+    aiScore: 85,
+    duplicateProbability: 0,
+    slaDeadline: sla(-10),
+    supportCount: 22,
+    createdAt: d(5),
+    updatedAt: d(1)
+  },
+  {
+    _id: 'cmp_105',
+    complaintId: 'CP-2026-105',
+    title: 'Clogged Stormwater Drain Overflow in Mylapore',
+    description: 'Blocked drain causing stagnant sewage water accumulation on Luz Church Road.',
+    category: 'Drainage',
+    subcategory: 'Clogged Drain',
+    severity: 'critical',
+    priority: 'P1',
+    status: 'escalated',
+    latitude: 13.0339,
+    longitude: 80.2676,
+    address: 'Luz Church Road, Mylapore, Chennai',
+    district: 'Chennai',
+    area: 'Mylapore',
+    citizenId: { _id: 'usr_thiru', name: 'Thiruvengadasuburamaninan', email: 'thiruvengadasuburamaninan@gmail.com' },
+    departmentId: { _id: 'dept_5', name: 'Drainage & Sewage Department' },
+    aiScore: 95,
+    duplicateProbability: 0.15,
+    slaDeadline: sla(-2),
+    supportCount: 31,
+    createdAt: d(4),
+    updatedAt: d(1)
+  }
+];
 
 function getStoredComplaints() {
   try {
     const data = localStorage.getItem('civicpulse_mock_complaints');
-    if (data) return JSON.parse(data);
+    if (data) {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
   } catch {}
   localStorage.setItem('civicpulse_mock_complaints', JSON.stringify(INITIAL_COMPLAINTS));
   return INITIAL_COMPLAINTS;

@@ -5,32 +5,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' },
-  adapter: async (config) => {
-    // If no backend API URL is set (standalone static Netlify mode), use mock adapter directly to prevent console 404 network errors
-    if (!import.meta.env.VITE_API_URL && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      const url = config.url || '';
-      const method = (config.method || 'GET').toUpperCase();
-      let body = null;
-      if (config.data) {
-        try {
-          body = typeof config.data === 'string' ? JSON.parse(config.data) : config.data;
-        } catch {
-          body = config.data;
-        }
-      }
-      const mock = handleMockRequest(url, method, body);
-      return {
-        data: mock.data,
-        status: mock.status,
-        statusText: 'OK',
-        headers: { 'content-type': 'application/json' },
-        config
-      };
-    }
-    // Standard HTTP adapter for local dev or live backend
-    return axios.defaults.adapter(config);
-  }
+  headers: { 'Content-Type': 'application/json' }
 });
 
 api.interceptors.request.use(config => {

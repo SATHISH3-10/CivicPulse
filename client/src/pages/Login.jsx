@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, Shield, User, Building2, Sparkles } from 'lucide-react';
 import { signInWithGoogleOAuth } from '../lib/supabase.js';
 
 export default function Login() {
-  const { user, isAuthenticated, login, loginWithGoogle } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
@@ -20,18 +20,11 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleError, setGoogleError] = useState('');
-  const googleButtonRef = useRef(null);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (!form.email || !form.password) {
-      addToast('Please enter both email address and password', 'warning');
-      return;
-    }
+  async function performLogin(email, password) {
     setLoading(true);
     try {
-      const loggedUser = await login(form.email, form.password);
+      const loggedUser = await login(email, password);
       addToast(`Welcome back, ${loggedUser.name}!`, 'success');
       navigate(getRoleDashboard(loggedUser.role));
     } catch (err) {
@@ -41,62 +34,23 @@ export default function Login() {
     }
   }
 
-  useEffect(() => {
-    if (!googleButtonRef.current) return undefined;
-
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) return undefined;
-
-    let cancelled = false;
-
-    const initializeGoogleButton = () => {
-      if (cancelled || !window.google?.accounts?.id || !googleButtonRef.current) return;
-
-      if (!window._gsiInitialized) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: async (response) => {
-            setLoading(true);
-            try {
-              const loggedUser = await loginWithGoogle(response.credential);
-              addToast(`Welcome back, ${loggedUser.name}!`, 'success');
-              navigate(getRoleDashboard(loggedUser.role));
-            } catch (err) {
-              console.error('Google login error:', err);
-              addToast(err.message || 'Google login failed', 'error');
-            } finally {
-              if (!cancelled) setLoading(false);
-            }
-          }
-        });
-        window._gsiInitialized = true;
-      }
-
-      googleButtonRef.current.replaceChildren();
-      window.google.accounts.id.renderButton(googleButtonRef.current, {
-        theme: 'outline',
-        size: 'large',
-        text: 'continue_with',
-        width: Math.min(400, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360))
-      });
-      setGoogleError('');
-    };
-
-    if (window.google?.accounts?.id) {
-      initializeGoogleButton();
-    } else {
-      const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      script?.addEventListener('load', initializeGoogleButton, { once: true });
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.email || !form.password) {
+      addToast('Please enter both email address and password', 'warning');
+      return;
     }
+    await performLogin(form.email, form.password);
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [addToast, loginWithGoogle, navigate]);
+  async function handleQuickDemoLogin(email) {
+    setForm({ email, password: 'password123' });
+    await performLogin(email, 'password123');
+  }
 
   return (
-    <div className="auth-page" style={{ padding: '40px 20px', minHeight: '100vh' }}>
-      <div className="auth-card fade-in" style={{ maxWidth: 450, padding: '36px 32px', width: '100%' }}>
+    <div className="auth-page" style={{ padding: '40px 20px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="auth-card fade-in" style={{ maxWidth: 460, padding: '36px 32px', width: '100%' }}>
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.875rem', color: 'var(--gray-500)', marginBottom: 20 }}>
           <ArrowLeft size={16} /> Back to Home
         </Link>
@@ -108,79 +62,117 @@ export default function Login() {
             <h1 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 800, color: 'var(--gray-900)' }}>CivicPulse AI</h1>
           </div>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-            Sign in to access your civic account portal
+            Sign in to access your live municipal portal
           </p>
         </div>
 
-        {/* Single Google Sign-In Button */}
+        {/* Google OAuth Login Button */}
         <div style={{ marginBottom: 20 }}>
-          {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-            <div
-              id="googleBtn"
-              ref={googleButtonRef}
-              style={{ display: 'flex', justifyContent: 'center', minHeight: 40 }}
-            />
-          ) : (
-            <button
-              type="button"
-              className="btn btn-secondary w-full"
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  await signInWithGoogleOAuth();
-                } catch (err) {
-                  addToast(err.message || 'Google OAuth redirect failed', 'error');
-                  setLoading(false);
-                }
-              }}
-              style={{ justifyContent: 'center', gap: 8, fontSize: '0.875rem' }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-              </svg>
-              Continue with Google
-            </button>
-          )}
+          <button
+            type="button"
+            className="btn btn-secondary w-full"
+            disabled={loading}
+            onClick={async () => {
+              setLoading(true);
+              try {
+                await signInWithGoogleOAuth();
+              } catch (err) {
+                addToast(err.message || 'Google OAuth redirect failed', 'error');
+                setLoading(false);
+              }
+            }}
+            style={{ justifyContent: 'center', gap: 10, fontSize: '0.9rem', padding: '10px 16px', fontWeight: 600 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            </svg>
+            Continue with Google
+          </button>
         </div>
 
+        {/* 1-Click Live Demo Credentials Selector */}
+        <div style={{ marginBottom: 24, background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-700)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <Sparkles size={16} style={{ color: 'var(--teal-600)' }} /> 1-Click Live Demo Logins:
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              type="button"
+              className="btn"
+              disabled={loading}
+              onClick={() => handleQuickDemoLogin('thiruvengadasuburamaninan@gmail.com')}
+              style={{
+                justify: 'flex-start',
+                background: 'var(--primary-50)',
+                color: 'var(--primary-700)',
+                border: '1px solid var(--primary-200)',
+                padding: '8px 12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                textAlign: 'left'
+              }}
+            >
+              <Building2 size={16} style={{ color: 'var(--primary-600)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div>🏛️ Municipal Admin</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>thiruvengadasuburamaninan@gmail.com</div>
+              </div>
+            </button>
 
-        {/* Quick Email Selection Bar */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--gray-500)', marginBottom: 6, textTransform: 'uppercase' }}>Quick Login Shortcuts:</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.75rem', padding: '4px 8px', border: '1px solid var(--gray-300)' }}
-              onClick={() => setForm({ email: 'sathishm.ug.24.it@francisxavier.ac.in', password: 'password123' })}
+              className="btn"
+              disabled={loading}
+              onClick={() => handleQuickDemoLogin('sathish.kurmbur2006@gmail.com')}
+              style={{
+                justify: 'flex-start',
+                background: 'var(--warning-50)',
+                color: 'var(--warning-800)',
+                border: '1px solid var(--warning-200)',
+                padding: '8px 12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                textAlign: 'left'
+              }}
             >
-              👤 Citizen
+              <Shield size={16} style={{ color: 'var(--warning-600)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div>🛡️ Field Officer</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>sathish.kurmbur2006@gmail.com</div>
+              </div>
             </button>
+
             <button
               type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.75rem', padding: '4px 8px', border: '1px solid var(--gray-300)' }}
-              onClick={() => setForm({ email: 'sathish.kurmbur2006@gmail.com', password: 'password123' })}
+              className="btn"
+              disabled={loading}
+              onClick={() => handleQuickDemoLogin('sathishm.ug.24.it@francisxavier.ac.in')}
+              style={{
+                justify: 'flex-start',
+                background: 'var(--teal-50)',
+                color: 'var(--teal-800)',
+                border: '1px solid var(--teal-200)',
+                padding: '8px 12px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                textAlign: 'left'
+              }}
             >
-              🛡️ Officer
-            </button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.75rem', padding: '4px 8px', border: '1px solid var(--gray-300)' }}
-              onClick={() => setForm({ email: 'thiruvengadasuburamaninan@gmail.com', password: 'password123' })}
-            >
-              🏛️ Admin
+              <User size={16} style={{ color: 'var(--teal-600)', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div>👤 Citizen Account</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>sathishm.ug.24.it@francisxavier.ac.in</div>
+              </div>
             </button>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div style={{ flex: 1, height: 1, background: 'var(--gray-200)' }} />
-          <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 600, textTransform: 'uppercase' }}>or sign in with email</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 600, textTransform: 'uppercase' }}>or sign in with password</span>
           <div style={{ flex: 1, height: 1, background: 'var(--gray-200)' }} />
         </div>
 
