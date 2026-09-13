@@ -5,7 +5,7 @@ import api from '../../services/api.js';
 import { CATEGORIES } from '../../components/shared.jsx';
 import VoiceInput from '../../components/VoiceInput.jsx';
 import { useLanguage } from '../../context/LanguageContext.jsx';
-import { ArrowLeft, ArrowRight, Upload, X, MapPin, Brain, CheckCircle, Image, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Upload, X, MapPin, Brain, CheckCircle, Image, AlertTriangle, Search, Loader2, Navigation } from 'lucide-react';
 
 const STEPS = ['Issue Details', 'Upload Evidence', 'Location', 'AI Analysis'];
 const SUBCATEGORIES = {
@@ -28,6 +28,9 @@ export default function ReportIssue() {
   const [form, setForm] = useState({ title: '', description: '', category: '', subcategory: '', severity: 'medium', dateObserved: new Date().toISOString().split('T')[0] });
   const [images, setImages] = useState([]);
   const [location, setLocation] = useState({ lat: null, lng: null, address: '' });
+  const [locating, setLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchingAddress, setSearchingAddress] = useState(false);
   const [analysis, setAnalysis] = useState(null);
   const [duplicates, setDuplicates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,33 +66,121 @@ export default function ReportIssue() {
   function removeImage(idx) { setImages(prev => prev.filter((_, i) => i !== idx)); }
 
   function getCurrentLocation() {
-    if (!navigator.geolocation) { addToast('Geolocation not supported', 'error'); return; }
+    if (!navigator.geolocation) {
+      addToast('Geolocation is not supported by your browser', 'error');
+      return;
+    }
+
+    setLocating(true);
+
+    const geoOptions = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setLocation({ lat: latitude, lng: longitude, address: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
+        const { latitude, longitude, accuracy } = pos.coords;
+        setLocation({
+          lat: latitude,
+          lng: longitude,
+          address: `Fetching address (${latitude.toFixed(4)}, ${longitude.toFixed(4)})...`
+        });
+
         if (mapInstance.current) {
           mapInstance.current.setView([latitude, longitude], 16);
           updateMarker(latitude, longitude);
         }
         reverseGeocode(latitude, longitude);
+        setLocating(false);
+        addToast(`Location acquired (accuracy: ~${Math.round(accuracy || 10)}m)`, 'success');
       },
-      () => { addToast('Could not get location. Please pin manually.', 'warning'); }
+      (err) => {
+        setLocating(false);
+        console.warn('Geolocation warning:', err);
+        if (err.code === 1) { // PERMISSION_DENIED
+          addToast('Location access denied. Please allow location permissions or search address below.', 'error');
+        } else {
+          // Fallback retry with lower accuracy (Cell tower/Wi-Fi positioning)
+          addToast('High-accuracy GPS timeout. Using network location fallback...', 'warning');
+          navigator.geolocation.getCurrentPosition(
+            (fallbackPos) => {
+              const { latitude, longitude } = fallbackPos.coords;
+              setLocation({ lat: latitude, lng: longitude, address: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
+              if (mapInstance.current) {
+                mapInstance.current.setView([latitude, longitude], 15);
+                updateMarker(latitude, longitude);
+              }
+              reverseGeocode(latitude, longitude);
+            },
+            () => {
+              addToast('Could not auto-detect location. Please search address or click map.', 'warning');
+            },
+            { enableHighAccuracy: false, timeout: 8000 }
+          );
+        }
+      },
+      geoOptions
     );
   }
 
   async function reverseGeocode(lat, lng) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, {
+        headers: { 'Accept-Language': 'en' }
+      });
       const data = await res.json();
-      if (data.display_name) setLocation(prev => ({ ...prev, address: data.display_name.split(',').slice(0, 3).join(', ') }));
-    } catch (e) { /* use coordinates */ }
+      if (data && data.display_name) {
+        const formattedAddress = data.display_name.split(',').slice(0, 4).join(', ');
+        setLocation(prev => ({ ...prev, address: formattedAddress }));
+      }
+    } catch (e) {
+      setLocation(prev => ({ ...prev, address: `${lat.toFixed(5)}, ${lng.toFixed(5)}` }));
+    }
+  }
+
+  async function searchAddress(e) {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearchingAddress(true);
+    try {
+      const query = searchQuery.includes('Chennai') || searchQuery.includes('Tamil Nadu') 
+        ? searchQuery 
+        : `${searchQuery}, Chennai`;
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
+        headers: { 'Accept-Language': 'en' }
+      });
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        const target = data[0];
+        const lat = parseFloat(target.lat);
+        const lng = parseFloat(target.lon);
+        const address = target.display_name.split(',').slice(0, 4).join(', ');
+
+        setLocation({ lat, lng, address });
+        if (mapInstance.current) {
+          mapInstance.current.setView([lat, lng], 16);
+          updateMarker(lat, lng);
+        }
+        addToast(`Found: ${address}`, 'success');
+      } else {
+        addToast('No location results found. Try typing a street or landmark name.', 'warning');
+      }
+    } catch (e) {
+      addToast('Address search failed. Please pin manually on map.', 'error');
+    } finally {
+      setSearchingAddress(false);
+    }
   }
 
   function updateMarker(lat, lng) {
     import('leaflet').then(L => {
-      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
-      else {
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lng]);
+      } else if (mapInstance.current) {
         markerRef.current = L.default.marker([lat, lng], { draggable: true }).addTo(mapInstance.current);
         markerRef.current.on('dragend', () => {
           const pos = markerRef.current.getLatLng();
@@ -299,16 +390,40 @@ export default function ReportIssue() {
       {/* Step 2: Location */}
       {step === 2 && (
         <div className="card">
-          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-            <button className="btn btn-teal" onClick={getCurrentLocation}><MapPin size={16} /> Use My Current Location</button>
-            <span style={{ color: 'var(--gray-400)', alignSelf: 'center' }}>or click on the map</span>
+          {/* Address / Landmark Search Form */}
+          <form onSubmit={searchAddress} style={{ marginBottom: 16 }}>
+            <label className="form-label">Search Landmark or Area</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div className="search-input" style={{ flex: 1 }}>
+                <Search size={18} />
+                <input
+                  type="text"
+                  placeholder="Type street name, area or landmark (e.g. T Nagar, Guindy)..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="btn btn-secondary" disabled={searchingAddress}>
+                {searchingAddress ? <Loader2 size={16} className="animate-spin" /> : 'Search'}
+              </button>
+            </div>
+          </form>
+
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button className="btn btn-teal" onClick={getCurrentLocation} disabled={locating}>
+              {locating ? <Loader2 size={16} className="animate-spin" /> : <Navigation size={16} />}
+              {locating ? 'Acquiring GPS...' : 'Use My Live GPS Location'}
+            </button>
+            <span style={{ color: 'var(--gray-500)', fontSize: '0.85rem' }}>or drag/click pin on map</span>
           </div>
-          <div ref={mapRef} style={{ height: 400, borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--gray-200)', marginBottom: 16 }} />
+
+          <div ref={mapRef} style={{ height: 380, borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--gray-200)', marginBottom: 16 }} />
+
           {location.lat && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: '0.875rem', background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: '0.875rem', background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
               <div><span style={{ color: 'var(--gray-500)' }}>Latitude:</span> <strong>{location.lat?.toFixed(6)}</strong></div>
               <div><span style={{ color: 'var(--gray-500)' }}>Longitude:</span> <strong>{location.lng?.toFixed(6)}</strong></div>
-              <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--gray-500)' }}>Address:</span> <strong>{location.address}</strong></div>
+              <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--gray-500)' }}>Tagged Address:</span> <strong>{location.address || 'Location Pinned'}</strong></div>
             </div>
           )}
         </div>

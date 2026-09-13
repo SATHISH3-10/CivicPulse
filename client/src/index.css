@@ -905,9 +905,11 @@ tr:last-child td { border-bottom: none; }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .fade-in { animation: fadeIn 0.5s ease; }
 .slide-up { animation: slideUp 0.5s ease; }
+.animate-spin { animation: spin 1s linear infinite; }
 
 /* ─── Complaint Card ─── */
 .complaint-card {
