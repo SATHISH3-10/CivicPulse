@@ -68,6 +68,7 @@ export default function ReportIssue() {
   function getCurrentLocation() {
     if (!navigator.geolocation) {
       addToast('Geolocation is not supported by your browser', 'error');
+      setFallbackLocation();
       return;
     }
 
@@ -75,7 +76,7 @@ export default function ReportIssue() {
 
     const geoOptions = {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 8000,
       maximumAge: 0
     };
 
@@ -98,12 +99,11 @@ export default function ReportIssue() {
       },
       (err) => {
         setLocating(false);
-        console.warn('Geolocation warning:', err);
         if (err.code === 1) { // PERMISSION_DENIED
-          addToast('Location access denied. Please allow location permissions or search address below.', 'error');
+          addToast('Location permission blocked by browser. Placed pin on Chennai City Center — drag pin or search address below.', 'warning');
+          setFallbackLocation();
         } else {
           // Fallback retry with lower accuracy (Cell tower/Wi-Fi positioning)
-          addToast('High-accuracy GPS timeout. Using network location fallback...', 'warning');
           navigator.geolocation.getCurrentPosition(
             (fallbackPos) => {
               const { latitude, longitude } = fallbackPos.coords;
@@ -115,14 +115,26 @@ export default function ReportIssue() {
               reverseGeocode(latitude, longitude);
             },
             () => {
-              addToast('Could not auto-detect location. Please search address or click map.', 'warning');
+              addToast('Could not auto-detect GPS. Placed pin on Chennai City Center — search address or drag pin.', 'warning');
+              setFallbackLocation();
             },
-            { enableHighAccuracy: false, timeout: 8000 }
+            { enableHighAccuracy: false, timeout: 5000 }
           );
         }
       },
       geoOptions
     );
+  }
+
+  function setFallbackLocation() {
+    const defaultLat = 13.0827;
+    const defaultLng = 80.2707;
+    const defaultAddress = 'Anna Salai, Chennai, Tamil Nadu';
+    setLocation({ lat: defaultLat, lng: defaultLng, address: defaultAddress });
+    if (mapInstance.current) {
+      mapInstance.current.setView([defaultLat, defaultLng], 14);
+      updateMarker(defaultLat, defaultLng);
+    }
   }
 
   async function reverseGeocode(lat, lng) {
