@@ -85,6 +85,7 @@ export default function CivicMap() {
       });
 
       mapInstance.current = map;
+      setTimeout(() => map.invalidateSize(), 250);
     });
   }, [complaints, filter, statusFilter]);
 
@@ -101,17 +102,17 @@ export default function CivicMap() {
       <h1 className="page-title">Civic Issue Map</h1>
       <p className="page-subtitle">What's happening around you?</p>
 
-      <div className="filters-bar">
+      <div className="filters-bar" style={{ overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 6 }}>
         {['all', ...CATEGORIES.slice(0, 7).map(c => c.value)].map(f => (
-          <button key={f} className={`filter-chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+          <button key={f} className={`filter-chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)} style={{ flexShrink: 0 }}>
             {f === 'all' ? 'All' : f}
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, height: 'calc(100vh - 280px)', minHeight: 500 }}>
-        <div style={{ position: 'relative', height: '100%' }}>
-          <div ref={mapRef} style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--gray-200)', height: '100%' }} />
+      <div className="civic-map-grid">
+        <div className="civic-map-view">
+          <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
           <button
             onClick={locateUser}
             disabled={locating}
@@ -130,7 +131,7 @@ export default function CivicMap() {
             <span>{locating ? 'Locating...' : 'My Live Location'}</span>
           </button>
         </div>
-        <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="civic-map-list">
           <h4 style={{ marginBottom: 4 }}>Nearby Issues ({complaints.filter(c => filter === 'all' || c.category === filter).length})</h4>
           {complaints.filter(c => filter === 'all' || c.category === filter).slice(0, 15).map(c => (
             <div key={c._id} className="card" style={{ padding: 14, fontSize: '0.875rem' }}>

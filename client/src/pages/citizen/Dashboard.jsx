@@ -231,11 +231,7 @@ export default function CitizenDashboard() {
 
           <div
             ref={mapRef}
-            style={{
-              height: 480,
-              width: '100%',
-              background: 'var(--gray-100)'
-            }}
+            className="dashboard-map-container"
           />
 
           {/* Map Legend */}

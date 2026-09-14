@@ -433,9 +433,9 @@ export default function Profile() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Mail size={16} style={{ color: 'var(--teal-300)' }} />
-                <span>{user?.email}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <Mail size={16} style={{ color: 'var(--teal-300)', flexShrink: 0 }} />
+                <span style={{ wordBreak: 'break-all' }}>{user?.email}</span>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
