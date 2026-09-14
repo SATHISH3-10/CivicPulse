@@ -4,7 +4,7 @@ import { createSupabaseModel } from '../db/supabaseModel.js';
   userId: { type: 'uuid', ref: 'User', required: true },
   departmentId: { type: 'uuid', ref: 'Department', required: true },
   district: { type: String, default: 'Chennai' },
-  area: { type: String, default: 'Anna Nagar' },
+  area: { type: String, default: '' },
   jurisdictionRadiusKm: { type: Number, default: 5 },
   availability: { type: String, enum: ['available', 'busy', 'offline'], default: 'available' },
   latitude: { type: Number, default: 13.0827 },

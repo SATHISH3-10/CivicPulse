@@ -293,14 +293,14 @@ export async function updateUserPermit(req, res) {
     }
 
     if (role === 'officer') {
-      const coords = AREA_COORDINATES[user.area || 'Anna Nagar'] || AREA_COORDINATES['Other'];
+      const coords = AREA_COORDINATES[user.area] || AREA_COORDINATES['Other'];
       await Officer.findOneAndUpdate(
         { userId: user._id },
         {
           userId: user._id,
           departmentId: resolvedDeptId || user.departmentId,
           district: user.district || 'Chennai',
-          area: user.area || 'Anna Nagar',
+          area: user.area || '',
           latitude: coords.lat,
           longitude: coords.lng,
           jurisdictionRadiusKm: 8,

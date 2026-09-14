@@ -34,7 +34,7 @@ export async function register(req, res) {
       phone,
       password,
       district = 'Chennai',
-      area = 'Anna Nagar',
+      area = '',
       departmentId,
       departmentName,
       badgeNumber
@@ -68,7 +68,7 @@ export async function register(req, res) {
       role: 'citizen',
       city: district || 'Chennai',
       district: district || 'Chennai',
-      area: area || 'Anna Nagar',
+      area: area || '',
       departmentId: resolvedDeptId || undefined,
       badgeNumber: badgeNumber || '',
       latitude: coords.lat,
@@ -133,7 +133,7 @@ export async function login(req, res) {
         role: targetRole,
         city: 'Chennai',
         district: 'Chennai',
-        area: 'Anna Nagar'
+        area: ''
       });
     }
 
@@ -155,7 +155,7 @@ export async function login(req, res) {
         email: user.email,
         role: user.role,
         district: user.district || 'Chennai',
-        area: user.area || 'Anna Nagar',
+        area: user.area || '',
         city: user.city || 'Chennai',
         phone: user.phone || '',
         department: typeof user.departmentId === 'object' ? user.departmentId?.name : '',
@@ -210,9 +210,9 @@ export async function googleLogin(req, res) {
         role: targetRole,
         city: 'Chennai',
         district: 'Chennai',
-        area: 'Anna Nagar',
-        latitude: AREA_COORDINATES['Anna Nagar'].lat,
-        longitude: AREA_COORDINATES['Anna Nagar'].lng,
+        area: '',
+        latitude: AREA_COORDINATES['Other'].lat,
+        longitude: AREA_COORDINATES['Other'].lng,
         jurisdictionRadiusKm: 8
       });
     } else {

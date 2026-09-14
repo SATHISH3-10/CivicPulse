@@ -52,7 +52,7 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     district: 'Chennai',
-    area: 'Anna Nagar'
+    area: ''
   });
 
   const update = (field) => (e) => {
@@ -234,6 +234,7 @@ export default function Register() {
                   value={form.area}
                   onChange={update('area')}
                 >
+                  <option value="">-- Select Local Ward / Area (Optional) --</option>
                   {CHENNAI_AREAS.map(a => (
                     <option key={a} value={a}>{a}</option>
                   ))}

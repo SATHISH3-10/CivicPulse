@@ -61,7 +61,7 @@ export default function AdminUsers() {
   const [selectedUserForPermit, setSelectedUserForPermit] = useState(null);
   const [permitForm, setPermitForm] = useState({
     departmentName: 'Roads & Infrastructure',
-    area: 'Anna Nagar',
+    area: '',
     badgeNumber: ''
   });
   const [submittingPermit, setSubmittingPermit] = useState(false);
@@ -86,7 +86,7 @@ export default function AdminUsers() {
     setSelectedUserForPermit(user);
     setPermitForm({
       departmentName: user.department || 'Roads & Infrastructure',
-      area: user.area || 'Anna Nagar',
+      area: user.area || '',
       badgeNumber: user.badgeNumber || `FO-${Math.floor(100 + Math.random() * 900)}`
     });
   }
@@ -403,7 +403,7 @@ export default function AdminUsers() {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <MapPin size={14} style={{ color: 'var(--warning-600)', flexShrink: 0 }} />
-                      <span>Assigned Ward: <strong>{u.area || 'Anna Nagar'}</strong>, {u.district || u.city || 'Chennai'}</span>
+                      <span>Assigned Ward: <strong>{u.area || 'Not Assigned'}</strong>, {u.district || u.city || 'Chennai'}</span>
                     </div>
 
                     {isOfficer && (
@@ -532,6 +532,7 @@ export default function AdminUsers() {
                   value={permitForm.area}
                   onChange={e => setPermitForm(prev => ({ ...prev, area: e.target.value }))}
                 >
+                  <option value="">-- Select Area / Ward --</option>
                   {TAMIL_NADU_AREAS.map(a => (
                     <option key={a} value={a}>{a}</option>
                   ))}

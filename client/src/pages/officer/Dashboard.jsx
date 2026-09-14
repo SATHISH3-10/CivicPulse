@@ -110,7 +110,7 @@ export default function OfficerDashboard() {
               }}
             >
               <MapPin size={14} style={{ color: 'var(--teal-500)' }} />
-              <strong>Patrol Border:</strong> {officerInfo?.area || user?.area || 'Anna Nagar'}, {officerInfo?.district || user?.district || 'Chennai'} ({officerInfo?.radiusKm || 8} km radius)
+              <strong>Patrol Border:</strong> {officerInfo?.area || user?.area || 'Not Assigned'}, {officerInfo?.district || user?.district || 'Chennai'} ({officerInfo?.radiusKm || 8} km radius)
             </span>
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function OfficerDashboard() {
                 </div>
                 <div className="empty-state-title">No pending issues in your border area!</div>
                 <div className="empty-state-text">
-                  Your patrol area ({officerInfo?.area || user?.area || 'Anna Nagar'}) is currently clear of pending {officerInfo?.department || 'department'} issues.
+                  Your patrol area ({officerInfo?.area || user?.area || 'assigned area'}) is currently clear of pending {officerInfo?.department || 'department'} issues.
                 </div>
               </div>
             ) : (

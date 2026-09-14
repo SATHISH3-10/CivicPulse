@@ -121,7 +121,7 @@ export function AuthProvider({ children }) {
         role,
         city: 'Chennai',
         district: 'Chennai',
-        area: 'Anna Nagar'
+        area: ''
       };
       authToken = 'jwt-token-' + authenticatedUser._id;
     }

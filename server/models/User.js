@@ -8,7 +8,7 @@ import { createSupabaseModel } from '../db/supabaseModel.js';
   role: { type: String, enum: ['citizen', 'officer', 'admin'], default: 'citizen' },
   city: { type: String, default: 'Chennai' },
   district: { type: String, default: 'Chennai' },
-  area: { type: String, default: 'Anna Nagar' },
+  area: { type: String, default: '' },
   departmentId: { type: 'uuid', ref: 'Department' },
   badgeNumber: { type: String, default: '' },
   latitude: { type: Number, default: 13.0827 },

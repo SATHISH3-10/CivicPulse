@@ -456,7 +456,7 @@ export function handleMockRequest(url, method = 'GET', body = null) {
         role: body?.role || users[idx].role,
         department: body?.departmentName || body?.department || users[idx].department,
         badgeNumber: body?.badgeNumber || users[idx].badgeNumber || `FO-${Math.floor(100 + Math.random() * 900)}`,
-        area: body?.area || users[idx].area || 'Anna Nagar'
+        area: body?.area || users[idx].area || ''
       };
       saveStoredUsers(users);
 

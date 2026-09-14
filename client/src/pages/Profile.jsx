@@ -72,7 +72,7 @@ export default function Profile() {
     name: user?.name || '',
     phone: formatIndianPhone(user?.phone || ''),
     district: user?.district || 'Chennai',
-    area: user?.area || 'Anna Nagar',
+    area: user?.area || '',
     city: user?.city || 'Chennai',
     avatar: user?.avatar || ''
   });
@@ -83,7 +83,7 @@ export default function Profile() {
         name: user.name || '',
         phone: formatIndianPhone(user.phone || ''),
         district: user.district || 'Chennai',
-        area: user.area || 'Anna Nagar',
+        area: user.area || '',
         city: user.city || 'Chennai',
         avatar: user.avatar || ''
       });
@@ -234,7 +234,7 @@ export default function Profile() {
       name: user?.name || '',
       phone: formatIndianPhone(user?.phone || ''),
       district: user?.district || 'Chennai',
-      area: user?.area || 'Anna Nagar',
+      area: user?.area || '',
       city: user?.city || 'Chennai',
       avatar: user?.avatar || ''
     });
@@ -248,7 +248,7 @@ export default function Profile() {
       name: user?.name || '',
       phone: formatIndianPhone(user?.phone || ''),
       district: user?.district || 'Chennai',
-      area: user?.area || 'Anna Nagar',
+      area: user?.area || '',
       city: user?.city || 'Chennai',
       avatar: user?.avatar || ''
     });
@@ -444,7 +444,7 @@ export default function Profile() {
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <MapPin size={16} style={{ color: 'var(--teal-300)' }} />
-                <span>{user?.area || 'Anna Nagar'}, {user?.district || 'Chennai'}</span>
+                <span>{user?.area ? `${user.area}, ` : ''}{user?.district || 'Chennai'}</span>
               </div>
             </div>
           </div>
@@ -576,7 +576,7 @@ export default function Profile() {
 
             <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Assigned Area / Ward</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--teal-700)' }}>{user?.area || 'Anna Nagar'}</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--teal-700)' }}>{user?.area || 'Not specified'}</div>
             </div>
 
             <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
@@ -660,6 +660,7 @@ export default function Profile() {
                   value={formData.area}
                   onChange={handleChange}
                 >
+                  <option value="">-- Select Area / Ward --</option>
                   {TAMIL_NADU_AREAS.map(area => (
                     <option key={area} value={area}>{area}</option>
                   ))}
