@@ -130,8 +130,20 @@ export default function AdminUsers() {
     await handleGrantPermit('citizen', user);
   }
 
+  // Deduplicate raw users by email
+  const uniqueUsersMap = new Map();
+  users.forEach(u => {
+    if (u && u.email) {
+      const lower = u.email.toLowerCase().trim();
+      if (!uniqueUsersMap.has(lower)) {
+        uniqueUsersMap.set(lower, u);
+      }
+    }
+  });
+  const uniqueUsers = Array.from(uniqueUsersMap.values());
+
   // Filter users based on search & role filter
-  const filteredUsers = users.filter(u => {
+  const filteredUsers = uniqueUsers.filter(u => {
     const matchesSearch =
       (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,10 +158,10 @@ export default function AdminUsers() {
     return matchesSearch && matchesRole;
   });
 
-  const total = users.length;
-  const citizensCount = users.filter(u => u.role === 'citizen').length;
-  const officersCount = users.filter(u => u.role === 'officer').length;
-  const adminsCount = users.filter(u => u.role === 'admin').length;
+  const total = uniqueUsers.length;
+  const citizensCount = uniqueUsers.filter(u => u.role === 'citizen').length;
+  const officersCount = uniqueUsers.filter(u => u.role === 'officer').length;
+  const adminsCount = uniqueUsers.filter(u => u.role === 'admin').length;
 
   return (
     <div className="fade-in">

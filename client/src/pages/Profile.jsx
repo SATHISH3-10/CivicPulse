@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { formatIndianPhone } from '../components/shared.jsx';
 import {
   getHDAvatarUrl,
   getGravatarUrl,

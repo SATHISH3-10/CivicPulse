@@ -228,7 +228,7 @@ function getStoredUsers() {
   } catch {}
 
   // Filter out legacy demo accounts
-  list = list.filter(u => !u.email?.includes('civicpulse.demo'));
+  list = list.filter(u => u && u.email && !u.email.includes('civicpulse.demo'));
 
   // Ensure default demo users are always present in the stored directory with their correct roles
   Object.values(DEMO_USERS).forEach(demoUser => {
@@ -239,6 +239,20 @@ function getStoredUsers() {
       list.push(demoUser);
     }
   });
+
+  // Deduplicate user records by email
+  const uniqueMap = new Map();
+  list.forEach(u => {
+    if (u && u.email) {
+      const lower = u.email.toLowerCase().trim();
+      if (!uniqueMap.has(lower)) {
+        uniqueMap.set(lower, u);
+      } else {
+        uniqueMap.set(lower, { ...uniqueMap.get(lower), ...u });
+      }
+    }
+  });
+  list = Array.from(uniqueMap.values());
 
   localStorage.setItem('civicpulse_mock_users', JSON.stringify(list));
   return list;

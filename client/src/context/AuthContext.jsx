@@ -296,6 +296,9 @@ export function AuthProvider({ children }) {
         /* silent catch */
       }
     }
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }, []);
 
   // --------------------------------------------------
