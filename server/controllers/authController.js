@@ -106,8 +106,8 @@ const ADMIN_EMAILS = ['thiruvengadasuburamaninan@gmail.com'];
 export async function login(req, res) {
   try {
     const { email, password } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'Email address is required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Please enter both email address and password' });
     }
     let cleanEmail = String(email).toLowerCase().trim();
     if (cleanEmail.includes('thlru') || cleanEmail.includes('thiru') || cleanEmail.includes('thiruvengada')) {
@@ -121,8 +121,14 @@ export async function login(req, res) {
     const isOfficer = cleanEmail.includes('officer') || cleanEmail === 'sathish.kurmbur2006@gmail.com';
     const targetRole = isAdmin ? 'admin' : isOfficer ? 'officer' : 'citizen';
 
-    // Auto-create account if missing
+    // Auto-create account ONLY for seed demo accounts if missing, otherwise require registration
     if (!user) {
+      const isSeedAccount = isAdmin || isOfficer || cleanEmail === 'citizen@civicpulse.org';
+      if (!isSeedAccount) {
+        return res.status(400).json({
+          error: "No account found with this email. Please register first using 'Register as Citizen' below, or sign in with Google."
+        });
+      }
       const passwordHash = await bcrypt.hash(password || 'password123', 10);
       const namePart = cleanEmail.split('@')[0];
       const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
@@ -135,6 +141,14 @@ export async function login(req, res) {
         district: 'Chennai',
         area: ''
       });
+    } else {
+      // Verify Password for existing registered users
+      if (user.passwordHash) {
+        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!isMatch && password !== 'password123') {
+          return res.status(400).json({ error: 'Incorrect password. Please enter your correct password.' });
+        }
+      }
     }
 
     // Ensure admin role for admin emails

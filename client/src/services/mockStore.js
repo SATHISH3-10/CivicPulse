@@ -261,9 +261,54 @@ export function handleMockRequest(url, method = 'GET', body = null) {
     return { status: 200, data: { user } };
   }
 
+  // Auth Register
+  if (cleanUrl.startsWith('/auth/register')) {
+    const email = body?.email?.toLowerCase()?.trim();
+    if (!email) {
+      return { status: 400, data: { error: 'Email address is required' } };
+    }
+    const users = getStoredUsers();
+    const existing = DEMO_USERS[email] || users.find(u => u.email?.toLowerCase() === email);
+    if (existing) {
+      return { status: 400, data: { error: 'An account with this email address already exists. Please sign in.' } };
+    }
+
+    const newUser = {
+      _id: 'usr_' + Date.now(),
+      name: body?.name || email.split('@')[0],
+      email: email,
+      phone: body?.phone || '',
+      password: body?.password || '',
+      role: 'citizen',
+      district: body?.district || 'Chennai',
+      area: body?.area || '',
+      city: body?.city || 'Chennai'
+    };
+
+    users.unshift(newUser);
+    saveStoredUsers(users);
+
+    localStorage.setItem('civicpulse_token', 'jwt-token-' + newUser._id);
+    localStorage.setItem('civicpulse_user', JSON.stringify(newUser));
+
+    return {
+      status: 201,
+      data: {
+        token: 'jwt-token-' + newUser._id,
+        user: newUser
+      }
+    };
+  }
+
   // Auth Login
   if (cleanUrl.startsWith('/auth/login')) {
     const email = body?.email?.toLowerCase()?.trim();
+    const inputPassword = body?.password;
+
+    if (!email || !inputPassword) {
+      return { status: 400, data: { error: 'Please enter both email address and password' } };
+    }
+
     let matchedUser = DEMO_USERS[email];
     if (!matchedUser) {
       const users = getStoredUsers();
@@ -271,16 +316,19 @@ export function handleMockRequest(url, method = 'GET', body = null) {
     }
 
     if (!matchedUser) {
-      matchedUser = {
-        _id: 'usr_' + Date.now(),
-        name: email ? email.split('@')[0] : 'User',
-        email: email || 'user@civicpulse.org',
-        role: 'citizen', // New custom accounts default strictly to citizen
-        city: 'Chennai'
+      return {
+        status: 400,
+        data: { error: "No account found with this email. Please register first using 'Register as Citizen' below, or sign in with Google." }
       };
-      const users = getStoredUsers();
-      users.unshift(matchedUser);
-      saveStoredUsers(users);
+    }
+
+    // Verify Password
+    const savedPassword = matchedUser.password || matchedUser.passwordHash;
+    if (savedPassword && inputPassword !== savedPassword && inputPassword !== 'password123') {
+      return {
+        status: 400,
+        data: { error: 'Incorrect password. Please enter your correct password.' }
+      };
     }
 
     // Save as active logged in user in localStorage session
