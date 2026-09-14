@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, Shield, User, Building2, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
 import { signInWithGoogleOAuth } from '../lib/supabase.js';
 
 export default function Login() {
@@ -43,11 +43,6 @@ export default function Login() {
     await performLogin(form.email, form.password);
   }
 
-  async function handleQuickDemoLogin(email) {
-    setForm({ email, password: 'password123' });
-    await performLogin(email, 'password123');
-  }
-
   return (
     <div className="auth-page" style={{ padding: '40px 20px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="auth-card fade-in" style={{ maxWidth: 460, padding: '36px 32px', width: '100%' }}>
@@ -67,7 +62,7 @@ export default function Login() {
         </div>
 
         {/* Google OAuth Login Button */}
-        <div style={{ marginBottom: 20 }}>
+        <div style={{ marginBottom: 24 }}>
           <button
             type="button"
             className="btn btn-secondary w-full"
@@ -91,89 +86,6 @@ export default function Login() {
             </svg>
             Continue with Google
           </button>
-        </div>
-
-        {/* 1-Click Live Demo Credentials Selector */}
-        <div style={{ marginBottom: 24, background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-700)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            <Sparkles size={16} style={{ color: 'var(--teal-600)' }} /> 1-Click Live Demo Logins:
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button
-              type="button"
-              className="btn"
-              disabled={loading}
-              onClick={() => handleQuickDemoLogin('thiruvengadasuburamaninan@gmail.com')}
-              style={{
-                justify: 'flex-start',
-                background: 'var(--primary-50)',
-                color: 'var(--primary-700)',
-                border: '1px solid var(--primary-200)',
-                padding: '8px 12px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                textAlign: 'left'
-              }}
-            >
-              <Building2 size={16} style={{ color: 'var(--primary-600)', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div>🏛️ Municipal Admin</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>thiruvengadasuburamaninan@gmail.com</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="btn"
-              disabled={loading}
-              onClick={() => handleQuickDemoLogin('sathish.kurmbur2006@gmail.com')}
-              style={{
-                justify: 'flex-start',
-                background: 'var(--warning-50)',
-                color: 'var(--warning-800)',
-                border: '1px solid var(--warning-200)',
-                padding: '8px 12px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                textAlign: 'left'
-              }}
-            >
-              <Shield size={16} style={{ color: 'var(--warning-600)', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div>🛡️ Field Officer</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>sathish.kurmbur2006@gmail.com</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="btn"
-              disabled={loading}
-              onClick={() => handleQuickDemoLogin('sathishm.ug.24.it@francisxavier.ac.in')}
-              style={{
-                justify: 'flex-start',
-                background: 'var(--teal-50)',
-                color: 'var(--teal-800)',
-                border: '1px solid var(--teal-200)',
-                padding: '8px 12px',
-                fontSize: '0.85rem',
-                fontWeight: 600,
-                textAlign: 'left'
-              }}
-            >
-              <User size={16} style={{ color: 'var(--teal-600)', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div>👤 Citizen Account</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--gray-500)', fontWeight: 400 }}>sathishm.ug.24.it@francisxavier.ac.in</div>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--gray-200)' }} />
-          <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)', fontWeight: 600, textTransform: 'uppercase' }}>or sign in with password</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--gray-200)' }} />
         </div>
 
         {/* Standard Email/Password Form */}
