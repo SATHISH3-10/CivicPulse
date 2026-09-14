@@ -323,6 +323,26 @@ export function AuthProvider({ children }) {
   }, []);
 
   // --------------------------------------------------
+  // Logout
+  // --------------------------------------------------
+  const logout = useCallback(async () => {
+    localStorage.removeItem('civicpulse_token');
+    localStorage.removeItem('civicpulse_user');
+    setToken(null);
+    setUser(null);
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (err) {
+        /* silent catch */
+      }
+    }
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }, []);
+
+  // --------------------------------------------------
   // Context Value
   // --------------------------------------------------
   const session = user ? { user, token } : null;
