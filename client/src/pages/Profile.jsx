@@ -236,7 +236,8 @@ export default function Profile() {
       district: user?.district || 'Chennai',
       area: user?.area || '',
       city: user?.city || 'Chennai',
-      avatar: user?.avatar || ''
+      avatar: user?.avatar || '',
+      password: ''
     });
     setIsEditing(true);
   }
@@ -250,7 +251,8 @@ export default function Profile() {
       district: user?.district || 'Chennai',
       area: user?.area || '',
       city: user?.city || 'Chennai',
-      avatar: user?.avatar || ''
+      avatar: user?.avatar || '',
+      password: ''
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -666,6 +668,51 @@ export default function Profile() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Optional Password Update / Setup for Email Login */}
+            <div className="form-group" style={{ marginBottom: 20, padding: 16, background: 'var(--teal-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--teal-200)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--teal-900)' }}>
+                  <Shield size={18} style={{ color: 'var(--teal-600)' }} /> Manual Sign-In Password Setup
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
+                    let pass = '';
+                    for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                    setFormData(prev => ({ ...prev, password: pass }));
+                    addToast('Strong password generated! You can copy or keep it.', 'info');
+                  }}
+                  style={{
+                    background: 'white',
+                    border: '1px solid var(--teal-400)',
+                    color: 'var(--teal-800)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '3px 10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4
+                  }}
+                >
+                  <Sparkles size={13} /> Generate Strong Password
+                </button>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--teal-800)', marginBottom: 12 }}>
+                If you created your account with Google, you can set your own password here to log in using email & password anytime.
+              </div>
+              <input
+                type="text"
+                name="password"
+                className="form-control"
+                value={formData.password || ''}
+                onChange={handleChange}
+                placeholder="Set or update your manual login password (at least 6 characters)"
+              />
             </div>
 
             {/* Profile Photo Quick Selection Card */}

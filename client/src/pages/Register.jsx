@@ -60,6 +60,17 @@ export default function Register() {
     setForm(prev => ({ ...prev, [field]: val }));
   };
 
+  function handleGeneratePassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
+    let pass = '';
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setForm(prev => ({ ...prev, password: pass, confirmPassword: pass }));
+    setShowPassword(true);
+    addToast('Strong password generated! You can keep or customize it.', 'info');
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.email || !form.password) {
@@ -243,53 +254,79 @@ export default function Register() {
             </div>
 
             {/* Password Fields */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-password">
-                  Password <span style={{ color: 'var(--error-500)' }}>*</span>
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    id="reg-password"
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-control"
-                    placeholder="At least 6 characters"
-                    value={form.password}
-                    onChange={update('password')}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: 12,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--gray-400)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--gray-700)' }}>Account Security</span>
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  style={{
+                    background: 'var(--teal-50)',
+                    border: '1px solid var(--teal-300)',
+                    color: 'var(--teal-700)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '3px 10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4
+                  }}
+                  title="Automatically generate a secure 12-character password"
+                >
+                  <Sparkles size={13} /> Generate Strong Password
+                </button>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-confirm">
-                  Confirm Password <span style={{ color: 'var(--error-500)' }}>*</span>
-                </label>
-                <input
-                  id="reg-confirm"
-                  type={showPassword ? 'text' : 'password'}
-                  className="form-control"
-                  placeholder="Repeat password"
-                  value={form.confirmPassword}
-                  onChange={update('confirmPassword')}
-                  required
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="reg-password">
+                    Password <span style={{ color: 'var(--error-500)' }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="reg-password"
+                      type={showPassword ? 'text' : 'password'}
+                      className="form-control"
+                      placeholder="At least 6 characters"
+                      value={form.password}
+                      onChange={update('password')}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: 12,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--gray-400)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="reg-confirm">
+                    Confirm Password <span style={{ color: 'var(--error-500)' }}>*</span>
+                  </label>
+                  <input
+                    id="reg-confirm"
+                    type={showPassword ? 'text' : 'password'}
+                    className="form-control"
+                    placeholder="Repeat password"
+                    value={form.confirmPassword}
+                    onChange={update('confirmPassword')}
+                    required
+                  />
+                </div>
               </div>
             </div>
 
