@@ -152,7 +152,7 @@ export default function Login() {
         {/* Brand Header */}
         <div className="auth-brand" style={{ marginBottom: 24, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 8 }}>
-            <div style={{ width: 44, height: 44, background: 'var(--teal-500)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 800, fontSize: 20, boxShadow: 'var(--shadow-md)' }}>CP</div>
+            <img src="/logo.jpg" alt="CivicPulse Logo" style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'cover', boxShadow: 'var(--shadow-md)' }} />
             <h1 style={{ fontSize: '1.75rem', margin: 0, fontWeight: 800, color: 'var(--gray-900)' }}>CivicPulse AI</h1>
           </div>
           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--gray-500)' }}>

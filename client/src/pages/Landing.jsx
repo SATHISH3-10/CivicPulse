@@ -31,7 +31,7 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="landing-logo">
-          <div className="landing-logo-icon">CP</div>
+          <img src="/logo.jpg" alt="CivicPulse Logo" style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover' }} />
           <span>CivicPulse AI</span>
         </div>
 

@@ -268,6 +268,16 @@ export function AuthProvider({ children }) {
   // --------------------------------------------------
   // Update Profile
   // --------------------------------------------------
+  const updateProfile = useCallback(async (data) => {
+    const res = await api.put('/auth/profile', data);
+    const updatedUser = res.data.user;
+
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  }, []);
+
+  // --------------------------------------------------
   // Complete Profile
   // --------------------------------------------------
   const completeProfile = useCallback(async (data) => {

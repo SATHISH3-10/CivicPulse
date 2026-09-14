@@ -96,7 +96,7 @@ export default function DashboardLayout() {
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon">CP</div>
+          <img src="/logo.jpg" alt="CivicPulse Logo" style={{ width: 42, height: 42, borderRadius: 10, objectFit: 'cover', boxShadow: 'var(--shadow-sm)' }} />
           <div>
             <div className="sidebar-brand-text">CivicPulse</div>
             <div className="sidebar-brand-sub">AI Platform</div>
@@ -174,7 +174,7 @@ export default function DashboardLayout() {
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="mobile-header-brand">
-              <span className="mobile-header-logo">CP</span>
+              <img src="/logo.jpg" alt="CivicPulse" style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover' }} />
               <span className="mobile-header-title">CivicPulse AI</span>
             </div>
           </div>
