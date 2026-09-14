@@ -483,6 +483,13 @@ tr:last-child td { border-bottom: none; }
   min-height: 100vh;
 }
 
+.content-container {
+  padding: 28px 32px 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 .top-header {
   height: var(--header-height);
   background: var(--white);
@@ -490,7 +497,7 @@ tr:last-child td { border-bottom: none; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 32px;
   position: sticky;
   top: 0;
   z-index: 1000 !important;
@@ -498,7 +505,7 @@ tr:last-child td { border-bottom: none; }
 .top-header-left { display: flex; align-items: center; gap: 16px; }
 .top-header-right { display: flex; align-items: center; gap: 16px; }
 
-.page-content { padding: 24px; }
+.page-content { padding: 0; }
 .page-title { font-size: var(--font-size-2xl); font-weight: 700; margin-bottom: 4px; }
 .page-subtitle { font-size: var(--font-size-sm); color: var(--gray-500); margin-bottom: 24px; }
 
@@ -1016,6 +1023,9 @@ tr:last-child td { border-bottom: none; }
 @media (max-width: 1024px) {
   .charts-grid { grid-template-columns: 1fr; }
   .map-sidebar { width: 280px; }
+  .content-container {
+    padding: 20px 24px 40px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1034,6 +1044,12 @@ tr:last-child td { border-bottom: none; }
     background: var(--primary-900);
   }
   .main-content { margin-left: 0; }
+  .content-container {
+    padding: 16px 20px calc(84px + env(safe-area-inset-bottom, 16px));
+  }
+  .top-header {
+    padding: 0 16px;
+  }
   .menu-toggle { display: flex; }
   .landing-nav { padding: 0 20px; }
   .landing-nav-links { display: none; }
@@ -1049,7 +1065,7 @@ tr:last-child td { border-bottom: none; }
   .map-container { height: 350px; }
   .fullscreen-map { height: calc(100vh - 56px); }
   .map-sidebar { width: 100%; position: relative; top: 0; left: 0; border-radius: 0; max-height: 300px; }
-  .page-content { padding: 16px; }
+  .page-content { padding: 0; }
   .auth-card { padding: 24px; }
   .notification-dropdown { width: 320px; right: -60px; }
   .filters-bar { gap: 8px; }
@@ -1074,6 +1090,9 @@ tr:last-child td { border-bottom: none; }
 }
 
 @media (max-width: 480px) {
+  .content-container {
+    padding: 14px 16px calc(84px + env(safe-area-inset-bottom, 16px));
+  }
   .stats-grid { grid-template-columns: 1fr; }
   .pulse-stats { grid-template-columns: 1fr; }
   .steps-grid { grid-template-columns: 1fr; }
