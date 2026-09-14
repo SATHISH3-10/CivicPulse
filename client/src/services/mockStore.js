@@ -30,8 +30,8 @@ const DEMO_USERS = {
     badgeNumber: 'FO-501'
   },
   'sathishm.ug.24.it@francisxavier.ac.in': {
-    _id: 'usr_johan_citizen',
-    name: 'Johan Citizen',
+    _id: 'usr_sathish_citizen',
+    name: 'Sathish M',
     email: 'sathishm.ug.24.it@francisxavier.ac.in',
     phone: '9876543210',
     role: 'citizen',
@@ -309,11 +309,8 @@ export function handleMockRequest(url, method = 'GET', body = null) {
       return { status: 400, data: { error: 'Please enter both email address and password' } };
     }
 
-    let matchedUser = DEMO_USERS[email];
-    if (!matchedUser) {
-      const users = getStoredUsers();
-      matchedUser = users.find(u => u.email?.toLowerCase() === email);
-    }
+    const users = getStoredUsers();
+    let matchedUser = users.find(u => u.email?.toLowerCase() === email) || DEMO_USERS[email];
 
     if (!matchedUser) {
       return {
