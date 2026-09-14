@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { formatIndianPhone } from '../components/shared.jsx';
 import { Eye, EyeOff, ArrowLeft, User, Shield, MapPin, Sparkles } from 'lucide-react';
 
 const DISTRICTS = [
@@ -55,7 +56,8 @@ export default function Register() {
   });
 
   const update = (field) => (e) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
+    const val = field === 'phone' ? formatIndianPhone(e.target.value) : e.target.value;
+    setForm(prev => ({ ...prev, [field]: val }));
   };
 
   async function handleSubmit(e) {

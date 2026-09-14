@@ -114,3 +114,35 @@ export function timeAgo(dateStr) {
 export function timeAgoSimple(dateStr) {
   return timeAgo(dateStr);
 }
+
+export function formatIndianPhone(rawVal) {
+  if (!rawVal) return '';
+
+  let cleaned = rawVal.toString().trim();
+
+  // If input starts with +91, remove +91 prefix to isolate raw digits
+  if (cleaned.startsWith('+91')) {
+    cleaned = cleaned.substring(3);
+  }
+
+  // Remove any non-digit characters
+  let digits = cleaned.replace(/\D/g, '');
+
+  // Handle pasted numbers starting with country code 91 or trunk 0
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.substring(2);
+  } else if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.substring(1);
+  }
+
+  // Cap strictly at 10 digits
+  digits = digits.slice(0, 10);
+
+  if (!digits) return '';
+
+  // Format as +91 XXXXX XXXXX
+  if (digits.length > 5) {
+    return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
+  }
+  return `+91 ${digits}`;
+}

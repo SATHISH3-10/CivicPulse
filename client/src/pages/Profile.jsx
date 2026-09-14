@@ -70,7 +70,7 @@ export default function Profile() {
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    phone: user?.phone || '',
+    phone: formatIndianPhone(user?.phone || ''),
     district: user?.district || 'Chennai',
     area: user?.area || 'Anna Nagar',
     city: user?.city || 'Chennai',
@@ -81,7 +81,7 @@ export default function Profile() {
     if (user) {
       setFormData({
         name: user.name || '',
-        phone: user.phone || '',
+        phone: formatIndianPhone(user.phone || ''),
         district: user.district || 'Chennai',
         area: user.area || 'Anna Nagar',
         city: user.city || 'Chennai',
@@ -92,7 +92,11 @@ export default function Profile() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'phone') {
+      setFormData(prev => ({ ...prev, phone: formatIndianPhone(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   }
 
   function handleFileSelect(e) {
@@ -228,7 +232,7 @@ export default function Profile() {
   function handleStartEditing() {
     setFormData({
       name: user?.name || '',
-      phone: user?.phone || '',
+      phone: formatIndianPhone(user?.phone || ''),
       district: user?.district || 'Chennai',
       area: user?.area || 'Anna Nagar',
       city: user?.city || 'Chennai',
@@ -242,7 +246,7 @@ export default function Profile() {
     setShowUrlInput(false);
     setFormData({
       name: user?.name || '',
-      phone: user?.phone || '',
+      phone: formatIndianPhone(user?.phone || ''),
       district: user?.district || 'Chennai',
       area: user?.area || 'Anna Nagar',
       city: user?.city || 'Chennai',
@@ -562,7 +566,7 @@ export default function Profile() {
 
             <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Phone Number</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{user?.phone || 'Not provided'}</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{formatIndianPhone(user?.phone) || 'Not provided'}</div>
             </div>
 
             <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>

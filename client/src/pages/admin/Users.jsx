@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { formatDate } from '../../components/shared.jsx';
+import { formatDate, formatIndianPhone } from '../../components/shared.jsx';
 import { getHDAvatarUrl } from '../../lib/avatar.js';
 import {
   Users,
@@ -397,7 +397,7 @@ export default function AdminUsers() {
                     {u.phone && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Phone size={14} style={{ color: 'var(--teal-600)', flexShrink: 0 }} />
-                        <span>{u.phone}</span>
+                        <span>{formatIndianPhone(u.phone)}</span>
                       </div>
                     )}
 
