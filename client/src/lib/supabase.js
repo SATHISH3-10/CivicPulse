@@ -35,4 +35,16 @@ export async function signInWithGoogleOAuth() {
   if (error) throw error;
   return data;
 }
+
+export async function sendPasswordResetEmail(email) {
+  if (!email) throw new Error('Please enter your email address first.');
+  if (isSupabaseConfigured) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`
+    });
+    if (error) throw error;
+    return data;
+  }
+  return true;
+}
 

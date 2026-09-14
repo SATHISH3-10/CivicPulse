@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
-import { signInWithGoogleOAuth } from '../lib/supabase.js';
+import { signInWithGoogleOAuth, sendPasswordResetEmail } from '../lib/supabase.js';
 
 export default function Login() {
   const { user, isAuthenticated, login } = useAuth();
@@ -41,6 +41,23 @@ export default function Login() {
       return;
     }
     await performLogin(form.email, form.password);
+  }
+
+  async function handleForgotPassword(e) {
+    e.preventDefault();
+    if (!form.email) {
+      addToast('Please enter your email address in the Email box above to receive a password reset link', 'warning');
+      return;
+    }
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(form.email);
+      addToast(`Password reset link sent to ${form.email}! Please check your inbox.`, 'success');
+    } catch (err) {
+      addToast(err.message || 'Failed to send password reset email', 'error');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -174,10 +191,7 @@ export default function Login() {
             </label>
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                addToast('Password reset link sent to your email address.', 'info');
-              }}
+              onClick={handleForgotPassword}
               style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.85rem', color: 'var(--teal-600)', cursor: 'pointer', textDecoration: 'underline' }}
             >
               Forgot password?
