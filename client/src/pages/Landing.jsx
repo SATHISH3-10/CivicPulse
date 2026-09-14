@@ -226,10 +226,10 @@ export default function Landing() {
           <div>
             <h4 className="footer-title">Support</h4>
             <ul className="footer-links">
-              <li><a href="#">Contact Us</a></li>
-              <li><a href="#">Help Center</a></li>
-              <li><a href="#">Privacy Policy</a></li>
-              <li><a href="#">Terms of Service</a></li>
+              <li><Link to="/contact">Contact Us</Link></li>
+              <li><Link to="/help">Help Center</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
+              <li><Link to="/terms">Terms of Service</Link></li>
             </ul>
           </div>
           <div>

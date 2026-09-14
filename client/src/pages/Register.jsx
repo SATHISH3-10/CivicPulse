@@ -348,6 +348,16 @@ export default function Register() {
             Sign In Here
           </Link>
         </div>
+
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'center', gap: 12, fontSize: '0.78rem', color: 'var(--gray-500)', flexWrap: 'wrap' }}>
+          <Link to="/contact" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Contact Us</Link>
+          <span>•</span>
+          <Link to="/help" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Help</Link>
+          <span>•</span>
+          <Link to="/privacy" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Privacy Policy</Link>
+          <span>•</span>
+          <Link to="/terms" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Terms & Conditions</Link>
+        </div>
       </div>
     </div>
   );

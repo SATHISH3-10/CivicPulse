@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
@@ -9,13 +9,15 @@ export default function Login() {
   const { user, isAuthenticated, login } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // If user is already authenticated, redirect to their authorized role dashboard
+  // If user is already authenticated, redirect to requested page or authorized role dashboard
   useEffect(() => {
     if (isAuthenticated && user?.role) {
-      navigate(getRoleDashboard(user.role), { replace: true });
+      const target = location.state?.from?.pathname || getRoleDashboard(user.role);
+      navigate(target, { replace: true });
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, location]);
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -26,9 +28,10 @@ export default function Login() {
     try {
       const loggedUser = await login(email, password);
       addToast(`Welcome back, ${loggedUser.name}!`, 'success');
-      navigate(getRoleDashboard(loggedUser.role));
+      const target = location.state?.from?.pathname || getRoleDashboard(loggedUser.role);
+      navigate(target, { replace: true });
     } catch (err) {
-      addToast(err.response?.data?.error || 'Invalid email or password', 'error');
+      addToast(err.response?.data?.error || err.message || 'Invalid email or password', 'error');
     } finally {
       setLoading(false);
     }
@@ -206,6 +209,16 @@ export default function Login() {
         <p style={{ textAlign: 'center', marginTop: 24, fontSize: '0.875rem', color: 'var(--gray-500)', marginBottom: 0 }}>
           Don't have an account? <Link to="/register" style={{ fontWeight: 700, color: 'var(--teal-600)' }}>Register as Citizen</Link>
         </p>
+
+        <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'center', gap: 12, fontSize: '0.78rem', color: 'var(--gray-500)', flexWrap: 'wrap' }}>
+          <Link to="/contact" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Contact Us</Link>
+          <span>•</span>
+          <Link to="/help" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Help</Link>
+          <span>•</span>
+          <Link to="/privacy" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Privacy Policy</Link>
+          <span>•</span>
+          <Link to="/terms" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Terms & Conditions</Link>
+        </div>
       </div>
     </div>
   );

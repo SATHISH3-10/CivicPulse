@@ -32,6 +32,12 @@ import AdminDepartments from './pages/admin/Departments.jsx';
 import AdminHotspots from './pages/admin/Hotspots.jsx';
 import AdminUsers from './pages/admin/Users.jsx';
 
+// Public Information Pages
+import Contact from './pages/Contact.jsx';
+import Privacy from './pages/Privacy.jsx';
+import Help from './pages/Help.jsx';
+import Terms from './pages/Terms.jsx';
+
 // Profile Page
 import Profile from './pages/Profile.jsx';
 
@@ -46,6 +52,10 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/terms" element={<Terms />} />
 
               {/* Citizen Protected Routes */}
               <Route

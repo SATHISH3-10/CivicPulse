@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ children, roles, allowedRoles }) {
   const { user, loading, isAuthenticated } = useAuth();
+  const location = useLocation();
 
   const requiredRoles = allowedRoles || roles;
 
@@ -15,7 +16,7 @@ export default function ProtectedRoute({ children, roles, allowedRoles }) {
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   const userRole = (user?.role || 'citizen').toLowerCase();
