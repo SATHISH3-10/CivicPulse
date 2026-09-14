@@ -8,14 +8,14 @@ import {
 const mobileNavByRole = {
   citizen: [
     { to: '/citizen', icon: LayoutDashboard, label: 'Home', exact: true },
-    { to: '/citizen/complaints', icon: FileText, label: 'My Requests' },
+    { to: '/citizen/complaints', icon: FileText, label: 'Requests' },
     { to: '/citizen/report', icon: PlusCircle, label: 'Report', isAction: true },
     { to: '/citizen/map', icon: MapPin, label: 'Live Map' },
     { to: '/citizen/profile', icon: User, label: 'Profile' },
   ],
   officer: [
     { to: '/officer', icon: LayoutDashboard, label: 'Home', exact: true },
-    { to: '/officer/complaints', icon: ClipboardList, label: 'Work Orders' },
+    { to: '/officer/complaints', icon: ClipboardList, label: 'Orders' },
     { to: '/officer/map', icon: MapPin, label: 'Route Map' },
     { to: '/officer/profile', icon: User, label: 'Profile' },
   ],

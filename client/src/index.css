@@ -1271,12 +1271,14 @@ tr:last-child td { border-bottom: none; }
     justify-content: center;
     gap: 3px;
     color: var(--gray-500);
-    padding: 6px 10px;
+    padding: 6px 4px;
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     text-decoration: none;
     flex: 1;
+    min-width: 0;
     min-height: 48px;
+    text-align: center;
   }
 
   .mobile-nav-item.active {
@@ -1286,6 +1288,7 @@ tr:last-child td { border-bottom: none; }
 
   .mobile-nav-icon {
     transition: transform var(--transition-fast);
+    flex-shrink: 0;
   }
 
   .mobile-nav-item.active .mobile-nav-icon {
@@ -1294,8 +1297,13 @@ tr:last-child td { border-bottom: none; }
   }
 
   .mobile-nav-label {
-    font-size: 0.68rem;
-    line-height: 1;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
   }
 
   .mobile-nav-action-btn {
