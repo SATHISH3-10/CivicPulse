@@ -268,37 +268,48 @@ export function AuthProvider({ children }) {
   // --------------------------------------------------
   // Update Profile
   // --------------------------------------------------
-  const updateProfile = useCallback(async (data) => {
-    const res = await api.put('/auth/profile', data);
+  // Complete Profile
+  // --------------------------------------------------
+  const completeProfile = useCallback(async (data) => {
+    const res = await api.post('/auth/complete-profile', data);
     const updatedUser = res.data.user;
 
-    localStorage.setItem(
-      'civicpulse_user',
-      JSON.stringify(updatedUser)
-    );
-
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
     setUser(updatedUser);
     return updatedUser;
   }, []);
 
   // --------------------------------------------------
-  // Logout
+  // Set Password (for Google users without password)
   // --------------------------------------------------
-  const logout = useCallback(async () => {
-    localStorage.removeItem('civicpulse_token');
-    localStorage.removeItem('civicpulse_user');
-    setToken(null);
-    setUser(null);
-    if (isSupabaseConfigured) {
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch (err) {
-        /* silent catch */
-      }
-    }
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
+  const setPassword = useCallback(async (newPassword) => {
+    const res = await api.post('/auth/set-password', { newPassword });
+    const updatedUser = res.data.user;
+
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  }, []);
+
+  // --------------------------------------------------
+  // Change Password
+  // --------------------------------------------------
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    const res = await api.post('/auth/change-password', { currentPassword, newPassword });
+    const updatedUser = res.data.user;
+
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  }, []);
+
+  // --------------------------------------------------
+  // Update Profile State Helper
+  // --------------------------------------------------
+  const updateUserState = useCallback((updatedUser) => {
+    if (!updatedUser) return;
+    localStorage.setItem('civicpulse_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
   }, []);
 
   // --------------------------------------------------
@@ -320,6 +331,10 @@ export function AuthProvider({ children }) {
         completeGoogleLogin,
         register,
         updateProfile,
+        completeProfile,
+        setPassword,
+        changePassword,
+        updateUserState,
         logout,
         checkAuth
       }}

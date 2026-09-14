@@ -19,6 +19,11 @@ export default function ProtectedRoute({ children, roles, allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // If user profile is not completed yet, force completion page
+  if (user && user.profileCompleted === false && location.pathname !== '/complete-profile') {
+    return <Navigate to="/complete-profile" state={{ from: location }} replace />;
+  }
+
   const userRole = (user?.role || 'citizen').toLowerCase();
 
   if (requiredRoles && Array.isArray(requiredRoles) && !requiredRoles.includes(userRole)) {

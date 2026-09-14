@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, getRoleDashboard } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock } from 'lucide-react';
-import { signInWithGoogleOAuth, sendPasswordResetEmail } from '../lib/supabase.js';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, Phone, KeyRound, X, CheckCircle } from 'lucide-react';
+import { signInWithGoogleOAuth } from '../lib/supabase.js';
+import api from '../services/api.js';
 
 export default function Login() {
   const { user, isAuthenticated, login } = useAuth();
@@ -11,11 +12,15 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // If user is already authenticated, redirect to requested page or authorized role dashboard
+  // If user is already authenticated, redirect appropriately
   useEffect(() => {
-    if (isAuthenticated && user?.role) {
-      const target = location.state?.from?.pathname || getRoleDashboard(user.role);
-      navigate(target, { replace: true });
+    if (isAuthenticated && user) {
+      if (user.profileCompleted === false) {
+        navigate('/complete-profile', { replace: true, state: { from: location.state?.from } });
+      } else if (user.role) {
+        const target = location.state?.from?.pathname || getRoleDashboard(user.role);
+        navigate(target, { replace: true });
+      }
     }
   }, [isAuthenticated, user, navigate, location]);
 
@@ -23,13 +28,31 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Forgot Password Modal State
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
+  const [forgotForm, setForgotForm] = useState({
+    contact: '',
+    method: 'email',
+    otp: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   async function performLogin(email, password) {
     setLoading(true);
     try {
       const loggedUser = await login(email, password);
       addToast(`Welcome back, ${loggedUser.name}!`, 'success');
-      const target = location.state?.from?.pathname || getRoleDashboard(loggedUser.role);
-      navigate(target, { replace: true });
+      
+      if (loggedUser.profileCompleted === false) {
+        navigate('/complete-profile', { replace: true, state: { from: location.state?.from } });
+      } else {
+        const target = location.state?.from?.pathname || getRoleDashboard(loggedUser.role);
+        navigate(target, { replace: true });
+      }
     } catch (err) {
       addToast(err.response?.data?.error || err.message || 'Invalid email or password', 'error');
     } finally {
@@ -46,20 +69,76 @@ export default function Login() {
     await performLogin(form.email, form.password);
   }
 
-  async function handleForgotPassword(e) {
+  function handleOpenForgotModal() {
+    setForgotForm({
+      contact: form.email || '',
+      method: form.email && !form.email.includes('@') ? 'phone' : 'email',
+      otp: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setForgotStep(1);
+    setShowForgotModal(true);
+  }
+
+  async function handleRequestOTP(e) {
     e.preventDefault();
-    if (!form.email) {
-      addToast('Please enter your email address in the Email box above to receive a password reset link', 'warning');
+    if (!forgotForm.contact.trim()) {
+      addToast('Please enter your registered email address or phone number', 'warning');
       return;
     }
-    setLoading(true);
+
+    setForgotLoading(true);
     try {
-      await sendPasswordResetEmail(form.email);
-      addToast(`Password reset link sent to ${form.email}! Please check your inbox.`, 'success');
+      const res = await api.post('/auth/forgot-password/request-otp', {
+        contact: forgotForm.contact,
+        method: forgotForm.method
+      });
+      addToast(res.data.message || 'Verification code sent!', 'success');
+      setForgotStep(2);
     } catch (err) {
-      addToast(err.message || 'Failed to send password reset email', 'error');
+      addToast(err.response?.data?.error || err.message || 'Failed to send OTP code', 'error');
     } finally {
-      setLoading(false);
+      setForgotLoading(false);
+    }
+  }
+
+  async function handleVerifyOTPAndReset(e) {
+    e.preventDefault();
+    if (!forgotForm.otp.trim()) {
+      addToast('Please enter the 6-digit verification code', 'warning');
+      return;
+    }
+    if (!forgotForm.newPassword) {
+      addToast('Please enter a new password', 'warning');
+      return;
+    }
+    if (forgotForm.newPassword.length < 6) {
+      addToast('New password must be at least 6 characters long', 'warning');
+      return;
+    }
+    if (forgotForm.newPassword !== forgotForm.confirmPassword) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await api.post('/auth/forgot-password/verify-otp', {
+        contact: forgotForm.contact,
+        otp: forgotForm.otp,
+        newPassword: forgotForm.newPassword
+      });
+
+      addToast(res.data.message || 'Password reset successfully!', 'success');
+      setShowForgotModal(false);
+      if (forgotForm.contact.includes('@')) {
+        setForm(prev => ({ ...prev, email: forgotForm.contact }));
+      }
+    } catch (err) {
+      addToast(err.response?.data?.error || err.message || 'Failed to reset password', 'error');
+    } finally {
+      setForgotLoading(false);
     }
   }
 
@@ -194,7 +273,7 @@ export default function Login() {
             </label>
             <button
               type="button"
-              onClick={handleForgotPassword}
+              onClick={handleOpenForgotModal}
               style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.85rem', color: 'var(--teal-600)', cursor: 'pointer', textDecoration: 'underline' }}
             >
               Forgot password?
@@ -220,6 +299,192 @@ export default function Login() {
           <Link to="/terms" style={{ color: 'var(--gray-500)', textDecoration: 'none' }}>Terms & Conditions</Link>
         </div>
       </div>
+
+      {/* FORGOT PASSWORD OTP MODAL */}
+      {showForgotModal && (
+        <div
+          className="fade-in"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 16
+          }}
+        >
+          <div
+            className="auth-card fade-in"
+            style={{
+              maxWidth: 440,
+              width: '100%',
+              padding: 28,
+              position: 'relative',
+              background: 'white',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-xl)'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(false)}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                background: 'none',
+                border: 'none',
+                color: 'var(--gray-400)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ width: 44, height: 44, background: 'var(--teal-50)', color: 'var(--teal-600)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                <KeyRound size={22} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--gray-900)' }}>
+                Reset Your Password
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: '4px 0 0 0' }}>
+                {forgotStep === 1 ? 'Choose how to receive your verification code' : 'Enter verification code and create new password'}
+              </p>
+            </div>
+
+            {forgotStep === 1 ? (
+              /* STEP 1: REQUEST OTP */
+              <form onSubmit={handleRequestOTP}>
+                <div className="form-group" style={{ marginBottom: 14 }}>
+                  <label className="form-label">Recovery Method</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${forgotForm.method === 'email' ? 'btn-teal' : 'btn-secondary'}`}
+                      onClick={() => setForgotForm(prev => ({ ...prev, method: 'email' }))}
+                      style={{ justifyContent: 'center', gap: 6 }}
+                    >
+                      <Mail size={16} /> Email OTP
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${forgotForm.method === 'phone' ? 'btn-teal' : 'btn-secondary'}`}
+                      onClick={() => setForgotForm(prev => ({ ...prev, method: 'phone' }))}
+                      style={{ justifyContent: 'center', gap: 6 }}
+                    >
+                      <Phone size={16} /> Phone OTP
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label className="form-label" htmlFor="forgot-contact">
+                    {forgotForm.method === 'email' ? 'Registered Email Address' : 'Registered Phone Number'}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    {forgotForm.method === 'email' ? (
+                      <Mail size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                    ) : (
+                      <Phone size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                    )}
+                    <input
+                      id="forgot-contact"
+                      className="form-control"
+                      type={forgotForm.method === 'email' ? 'email' : 'tel'}
+                      placeholder={forgotForm.method === 'email' ? 'you@example.com' : '+91 98765 43210'}
+                      value={forgotForm.contact}
+                      onChange={e => setForgotForm(prev => ({ ...prev, contact: e.target.value }))}
+                      style={{ paddingLeft: 42 }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button className="btn btn-teal btn-lg w-full" type="submit" disabled={forgotLoading} style={{ justifyContent: 'center' }}>
+                  {forgotLoading ? 'Sending Verification Code...' : 'Send Verification Code (OTP)'}
+                </button>
+              </form>
+            ) : (
+              /* STEP 2: VERIFY OTP & RESET PASSWORD */
+              <form onSubmit={handleVerifyOTPAndReset}>
+                <div style={{ background: 'var(--teal-50)', border: '1px solid var(--teal-200)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', fontSize: '0.8rem', color: 'var(--teal-900)', marginBottom: 16 }}>
+                  Verification code sent to <strong>{forgotForm.contact}</strong>
+                  <button
+                    type="button"
+                    onClick={() => setForgotStep(1)}
+                    style={{ background: 'none', border: 'none', color: 'var(--teal-700)', textDecoration: 'underline', marginLeft: 8, cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Change
+                  </button>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 14 }}>
+                  <label className="form-label" htmlFor="forgot-otp">6-Digit Verification Code (OTP)</label>
+                  <input
+                    id="forgot-otp"
+                    className="form-control"
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    value={forgotForm.otp}
+                    onChange={e => setForgotForm(prev => ({ ...prev, otp: e.target.value.replace(/\D/g, '') }))}
+                    style={{ letterSpacing: 4, fontWeight: 700, textAlign: 'center', fontSize: '1.1rem' }}
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 14 }}>
+                  <label className="form-label" htmlFor="forgot-newpass">New Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                    <input
+                      id="forgot-newpass"
+                      className="form-control"
+                      type={showNewPassword ? 'text' : 'password'}
+                      placeholder="Minimum 6 characters"
+                      value={forgotForm.newPassword}
+                      onChange={e => setForgotForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                      style={{ paddingLeft: 42, paddingRight: 44 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label className="form-label" htmlFor="forgot-confirmpass">Confirm New Password</label>
+                  <input
+                    id="forgot-confirmpass"
+                    className="form-control"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Re-enter new password"
+                    value={forgotForm.confirmPassword}
+                    onChange={e => setForgotForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <button className="btn btn-teal btn-lg w-full" type="submit" disabled={forgotLoading} style={{ justifyContent: 'center' }}>
+                  {forgotLoading ? 'Resetting Password...' : 'Verify Code & Reset Password'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

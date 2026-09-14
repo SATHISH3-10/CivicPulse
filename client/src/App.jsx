@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.jsx';
+import { AuthProvider, useAuth, getRoleDashboard } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { LanguageProvider } from './context/LanguageContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -9,6 +9,7 @@ import DashboardLayout from './layouts/DashboardLayout.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
+import CompleteProfile from './pages/CompleteProfile.jsx';
 
 // Citizen Pages
 import CitizenDashboard from './pages/citizen/Dashboard.jsx';
@@ -41,6 +42,28 @@ import Terms from './pages/Terms.jsx';
 // Profile Page
 import Profile from './pages/Profile.jsx';
 
+function CompleteProfileGuard() {
+  const { user, isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <div className="skeleton" style={{ width: 200, height: 24 }}></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.profileCompleted !== false) {
+    return <Navigate to={getRoleDashboard(user.role)} replace />;
+  }
+
+  return <CompleteProfile />;
+}
+
 export default function App() {
   return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -52,6 +75,7 @@ export default function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/complete-profile" element={<CompleteProfileGuard />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/help" element={<Help />} />

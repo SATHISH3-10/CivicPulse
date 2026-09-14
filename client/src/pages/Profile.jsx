@@ -24,9 +24,14 @@ import {
   ZoomOut,
   Sparkles,
   Link as LinkIcon,
-  RefreshCw,
-  Image as ImageIcon
+  Eye,
+  EyeOff,
+  Lock,
+  ShieldCheck,
+  KeyRound,
+  ArrowRight
 } from 'lucide-react';
+import api from '../services/api.js';
 
 const TAMIL_NADU_AREAS = [
   'Anna Nagar',
@@ -48,7 +53,7 @@ const TAMIL_NADU_AREAS = [
 ];
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, setPassword, changePassword, updateUserState } = useAuth();
   const { addToast } = useToast();
   const fileInputRef = useRef(null);
 
@@ -68,6 +73,27 @@ export default function Profile() {
   const [cropPos, setCropPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Password & Security State
+  const [passForm, setPassForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passLoading, setPassLoading] = useState(false);
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+
+  // Contact Info OTP Change Modal State
+  const [contactModal, setContactModal] = useState({
+    show: false,
+    type: 'email', // 'email' or 'phone'
+    step: 1,
+    newValue: '',
+    currentPassword: '',
+    otp: '',
+    loading: false
+  });
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -164,7 +190,7 @@ export default function Profile() {
       setFormData(prev => ({ ...prev, avatar: croppedDataUrl }));
       setShowCropModal(false);
       setRawImageForCrop(null);
-      addToast('High-definition profile photo cropped & applied! Click "Save Changes" to save.', 'success');
+      addToast('Profile photo cropped & applied! Click "Save Changes" to save.', 'success');
     };
   }
 
@@ -237,8 +263,7 @@ export default function Profile() {
       district: user?.district || 'Chennai',
       area: user?.area || '',
       city: user?.city || 'Chennai',
-      avatar: user?.avatar || '',
-      password: ''
+      avatar: user?.avatar || ''
     });
     setIsEditing(true);
   }
@@ -252,8 +277,7 @@ export default function Profile() {
       district: user?.district || 'Chennai',
       area: user?.area || '',
       city: user?.city || 'Chennai',
-      avatar: user?.avatar || '',
-      password: ''
+      avatar: user?.avatar || ''
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -280,6 +304,113 @@ export default function Profile() {
     }
   }
 
+  // Password Set/Change submit handler
+  async function handlePasswordSubmit(e) {
+    e.preventDefault();
+
+    if (!passForm.newPassword) {
+      addToast('Please enter a new password', 'warning');
+      return;
+    }
+    if (passForm.newPassword.length < 6) {
+      addToast('Password must be at least 6 characters long', 'warning');
+      return;
+    }
+    if (passForm.newPassword !== passForm.confirmPassword) {
+      addToast('Passwords do not match', 'error');
+      return;
+    }
+
+    setPassLoading(true);
+    try {
+      if (user?.hasPassword) {
+        if (!passForm.currentPassword) {
+          addToast('Please enter your current password', 'warning');
+          setPassLoading(false);
+          return;
+        }
+        await changePassword(passForm.currentPassword, passForm.newPassword);
+        addToast('Password changed successfully!', 'success');
+      } else {
+        await setPassword(passForm.newPassword);
+        addToast('Password created successfully! You can now sign in using Email + Password as well.', 'success');
+      }
+
+      setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      addToast(err.response?.data?.error || err.message || 'Password update failed', 'error');
+    } finally {
+      setPassLoading(false);
+    }
+  }
+
+  // Open Contact Change Modal
+  function handleOpenContactModal(type) {
+    setContactModal({
+      show: true,
+      type,
+      step: 1,
+      newValue: type === 'email' ? user?.email || '' : user?.phone || '',
+      currentPassword: '',
+      otp: '',
+      loading: false
+    });
+  }
+
+  // Contact Change Request OTP
+  async function handleRequestContactOTP(e) {
+    e.preventDefault();
+    if (!contactModal.newValue.trim()) {
+      addToast(`Please enter a valid ${contactModal.type === 'email' ? 'email address' : 'phone number'}`, 'warning');
+      return;
+    }
+
+    if (user?.hasPassword && !contactModal.currentPassword) {
+      addToast('Please enter your current password for security verification', 'warning');
+      return;
+    }
+
+    setContactModal(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post('/auth/request-contact-otp', {
+        type: contactModal.type,
+        newValue: contactModal.newValue,
+        currentPassword: contactModal.currentPassword
+      });
+
+      addToast(res.data.message || 'Verification code sent!', 'success');
+      setContactModal(prev => ({ ...prev, step: 2, loading: false }));
+    } catch (err) {
+      addToast(err.response?.data?.error || err.message || 'Failed to send OTP code', 'error');
+      setContactModal(prev => ({ ...prev, loading: false }));
+    }
+  }
+
+  // Contact Change Verify OTP
+  async function handleVerifyContactOTP(e) {
+    e.preventDefault();
+    if (!contactModal.otp.trim()) {
+      addToast('Please enter the 6-digit verification code', 'warning');
+      return;
+    }
+
+    setContactModal(prev => ({ ...prev, loading: true }));
+    try {
+      const res = await api.post('/auth/verify-contact-otp', {
+        type: contactModal.type,
+        newValue: contactModal.newValue,
+        otp: contactModal.otp
+      });
+
+      updateUserState(res.data.user);
+      addToast(res.data.message || `${contactModal.type === 'email' ? 'Email' : 'Phone'} updated successfully!`, 'success');
+      setContactModal(prev => ({ ...prev, show: false, loading: false }));
+    } catch (err) {
+      addToast(err.response?.data?.error || err.message || 'Failed to verify OTP', 'error');
+      setContactModal(prev => ({ ...prev, loading: false }));
+    }
+  }
+
   function handleOpenLightbox(src) {
     if (!src) return;
     setLightboxSrc(getHDAvatarUrl(src, user?.email));
@@ -287,8 +418,6 @@ export default function Profile() {
   }
 
   const roleLabel = user?.role === 'admin' ? 'Municipal Authority' : user?.role === 'officer' ? 'Field Officer' : 'Citizen User';
-  
-  // Calculate active avatar display URL
   const activeAvatarRaw = isEditing ? formData.avatar : user?.avatar;
   const currentAvatar = getHDAvatarUrl(activeAvatarRaw, user?.email);
 
@@ -516,7 +645,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Custom URL Input popdown */}
             {showUrlInput && (
               <div style={{ marginTop: 12, display: 'flex', gap: 8, maxWidth: 500 }}>
                 <input
@@ -546,54 +674,187 @@ export default function Profile() {
 
       {/* READ-ONLY VIEW MODE */}
       {!isEditing ? (
-        <div className="card fade-in">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--gray-200)', paddingBottom: 12 }}>
-            <h3 className="card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <User size={20} style={{ color: 'var(--primary-600)' }} /> Account Details & Jurisdiction Info
-            </h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)', background: 'var(--gray-100)', padding: '4px 10px', borderRadius: 'var(--radius-full)' }}>
-              🔒 Read-Only View
-            </span>
+        <>
+          <div className="card fade-in" style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--gray-200)', paddingBottom: 12 }}>
+              <h3 className="card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <User size={20} style={{ color: 'var(--primary-600)' }} /> Account Details & Jurisdiction Info
+              </h3>
+              <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)', background: 'var(--gray-100)', padding: '4px 10px', borderRadius: 'var(--radius-full)' }}>
+                🔒 Read-Only View
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 10 }}>
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Full Name</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{user?.name || 'Not specified'}</div>
+              </div>
+
+              {/* Email with OTP Change Button */}
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase' }}>Email Address</div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenContactModal('email')}
+                    style={{ background: 'none', border: 'none', color: 'var(--teal-600)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <Lock size={12} /> Change
+                  </button>
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary-700)', wordBreak: 'break-all' }}>{user?.email || 'Not specified'}</div>
+              </div>
+
+              {/* Phone with OTP Change Button */}
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase' }}>Phone Number</div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenContactModal('phone')}
+                    style={{ background: 'none', border: 'none', color: 'var(--teal-600)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    <Lock size={12} /> Change
+                  </button>
+                </div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{formatIndianPhone(user?.phone) || 'Not provided'}</div>
+              </div>
+
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>City / District</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{user?.district || user?.city || 'Chennai'}</div>
+              </div>
+
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Assigned Area / Ward</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--teal-700)' }}>{user?.area || 'Not specified'}</div>
+              </div>
+
+              <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Account Role</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary-600)', textTransform: 'capitalize' }}>{user?.role || 'Citizen'}</div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+              <button onClick={handleStartEditing} className="btn btn-teal">
+                <Edit2 size={16} /> Edit Profile Details & Picture
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginBottom: 10 }}>
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Full Name</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{user?.name || 'Not specified'}</div>
+          {/* PASSWORD & SECURITY SECTION */}
+          <div className="card fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid var(--gray-200)', paddingBottom: 12 }}>
+              <h3 className="card-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Shield size={20} style={{ color: 'var(--teal-600)' }} /> Password & Security Management
+              </h3>
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-full)',
+                  background: user?.hasPassword ? 'var(--teal-50)' : '#fef3c7',
+                  color: user?.hasPassword ? 'var(--teal-800)' : '#92400e',
+                  border: user?.hasPassword ? '1px solid var(--teal-200)' : '1px solid #fde68a'
+                }}
+              >
+                {user?.hasPassword ? '🔑 Password Set' : '🌐 Google OAuth Only'}
+              </span>
             </div>
 
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Email Address</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary-700)', wordBreak: 'break-all' }}>{user?.email || 'Not specified'}</div>
+            {/* Account Password Status Explanation Banner */}
+            <div style={{ background: 'var(--gray-50)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)', marginBottom: 20, fontSize: '0.85rem', color: 'var(--gray-700)' }}>
+              {user?.hasPassword ? (
+                <div>
+                  <strong>Password Protection Active:</strong> Your account has a password set. You can sign in using Email + Password or Continue with Google.
+                </div>
+              ) : (
+                <div>
+                  <strong>Google OAuth Account:</strong> You signed in via Google and do not have an Email + Password credential yet. Set a password below to enable direct email sign-in.
+                </div>
+              )}
             </div>
 
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Phone Number</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{formatIndianPhone(user?.phone) || 'Not provided'}</div>
-            </div>
+            <form onSubmit={handlePasswordSubmit}>
+              {user?.hasPassword && (
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label className="form-label" htmlFor="profile-currpass">Current Password</label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                    <input
+                      id="profile-currpass"
+                      className="form-control"
+                      type={showCurrentPass ? 'text' : 'password'}
+                      placeholder="Enter your current password"
+                      value={passForm.currentPassword}
+                      onChange={e => setPassForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      style={{ paddingLeft: 42, paddingRight: 44 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPass(!showCurrentPass)}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}
+                    >
+                      {showCurrentPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>City / District</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--gray-900)' }}>{user?.district || user?.city || 'Chennai'}</div>
-            </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" htmlFor="profile-newpass">
+                    {user?.hasPassword ? 'New Password' : 'Create New Password'}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+                    <input
+                      id="profile-newpass"
+                      className="form-control"
+                      type={showNewPass ? 'text' : 'password'}
+                      placeholder="At least 6 characters"
+                      value={passForm.newPassword}
+                      onChange={e => setPassForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                      style={{ paddingLeft: 42, paddingRight: 44 }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPass(!showNewPass)}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}
+                    >
+                      {showNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
 
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Assigned Area / Ward</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--teal-700)' }}>{user?.area || 'Not specified'}</div>
-            </div>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" htmlFor="profile-confirmpass">Confirm Password</label>
+                  <input
+                    id="profile-confirmpass"
+                    className="form-control"
+                    type={showNewPass ? 'text' : 'password'}
+                    placeholder="Re-enter new password"
+                    value={passForm.confirmPassword}
+                    onChange={e => setPassForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
 
-            <div style={{ background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Account Role</div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--primary-600)', textTransform: 'capitalize' }}>{user?.role || 'Citizen'}</div>
-            </div>
+              <div style={{ textAlign: 'right' }}>
+                <button className="btn btn-teal" type="submit" disabled={passLoading} style={{ gap: 8 }}>
+                  <ShieldCheck size={16} />
+                  <span>{passLoading ? 'Saving Password...' : user?.hasPassword ? 'Change Password' : 'Set Password'}</span>
+                </button>
+              </div>
+            </form>
           </div>
-
-          <div style={{ marginTop: 24, textAlign: 'right' }}>
-            <button onClick={handleStartEditing} className="btn btn-teal">
-              <Edit2 size={16} /> Edit Profile Details & Picture
-            </button>
-          </div>
-        </div>
+        </>
       ) : (
         /* EDIT MODE FORM */
         <div className="card fade-in">
@@ -671,51 +932,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Optional Password Update / Setup for Email Login */}
-            <div className="form-group" style={{ marginBottom: 20, padding: 16, background: 'var(--teal-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--teal-200)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
-                <label className="form-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--teal-900)' }}>
-                  <Shield size={18} style={{ color: 'var(--teal-600)' }} /> Manual Sign-In Password Setup
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
-                    let pass = '';
-                    for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
-                    setFormData(prev => ({ ...prev, password: pass }));
-                    addToast('Strong password generated! You can copy or keep it.', 'info');
-                  }}
-                  style={{
-                    background: 'white',
-                    border: '1px solid var(--teal-400)',
-                    color: 'var(--teal-800)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '3px 10px',
-                    fontSize: '0.78rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4
-                  }}
-                >
-                  <Sparkles size={13} /> Generate Strong Password
-                </button>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--teal-800)', marginBottom: 12 }}>
-                If you created your account with Google, you can set your own password here to log in using email & password anytime.
-              </div>
-              <input
-                type="text"
-                name="password"
-                className="form-control"
-                value={formData.password || ''}
-                onChange={handleChange}
-                placeholder="Set or update your manual login password (at least 6 characters)"
-              />
-            </div>
-
             {/* Profile Photo Quick Selection Card */}
             <div className="form-group" style={{ marginBottom: 24, padding: 16, background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
@@ -752,10 +968,6 @@ export default function Profile() {
                   </button>
                 )}
               </div>
-
-              <small style={{ color: 'var(--gray-600)', display: 'block', marginTop: 10 }}>
-                Clicking <strong>Use Email Profile Picture</strong> will automatically fetch your Gravatar avatar linked to <em>{user?.email}</em>. You can also select any photo from your phone or PC.
-              </small>
             </div>
 
             {/* Action Buttons */}
@@ -788,16 +1000,124 @@ export default function Profile() {
         </div>
       )}
 
+      {/* SECURITY-VERIFIED CONTACT CHANGE MODAL */}
+      {contactModal.show && (
+        <div
+          className="fade-in"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 16
+          }}
+        >
+          <div
+            className="auth-card fade-in"
+            style={{
+              maxWidth: 440,
+              width: '100%',
+              padding: 28,
+              position: 'relative',
+              background: 'white',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-xl)'
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setContactModal(prev => ({ ...prev, show: false }))}
+              style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', color: 'var(--gray-400)', cursor: 'pointer' }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ width: 44, height: 44, background: 'var(--teal-50)', color: 'var(--teal-600)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                <KeyRound size={22} />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--gray-900)' }}>
+                Security Verification ({contactModal.type === 'email' ? 'Email Address' : 'Phone Number'})
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: '4px 0 0 0' }}>
+                {contactModal.step === 1 ? 'Enter your new contact value and verify security' : 'Enter 6-digit code sent to your new contact'}
+              </p>
+            </div>
+
+            {contactModal.step === 1 ? (
+              <form onSubmit={handleRequestContactOTP}>
+                <div className="form-group" style={{ marginBottom: 14 }}>
+                  <label className="form-label">
+                    New {contactModal.type === 'email' ? 'Email Address' : 'Phone Number'}
+                  </label>
+                  <input
+                    className="form-control"
+                    type={contactModal.type === 'email' ? 'email' : 'tel'}
+                    placeholder={contactModal.type === 'email' ? 'newemail@example.com' : '+91 98765 43210'}
+                    value={contactModal.newValue}
+                    onChange={e => setContactModal(prev => ({ ...prev, newValue: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                {user?.hasPassword && (
+                  <div className="form-group" style={{ marginBottom: 20 }}>
+                    <label className="form-label">Current Password (Required for Security)</label>
+                    <input
+                      className="form-control"
+                      type="password"
+                      placeholder="Enter current password"
+                      value={contactModal.currentPassword}
+                      onChange={e => setContactModal(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      required
+                    />
+                  </div>
+                )}
+
+                <button className="btn btn-teal btn-lg w-full" type="submit" disabled={contactModal.loading} style={{ justifyContent: 'center' }}>
+                  {contactModal.loading ? 'Sending Code...' : 'Send Verification OTP'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyContactOTP}>
+                <div style={{ background: 'var(--teal-50)', padding: 10, borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', color: 'var(--teal-900)', marginBottom: 16 }}>
+                  Verification code sent to <strong>{contactModal.newValue}</strong>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 20 }}>
+                  <label className="form-label">6-Digit Verification Code (OTP)</label>
+                  <input
+                    className="form-control"
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    value={contactModal.otp}
+                    onChange={e => setContactModal(prev => ({ ...prev, otp: e.target.value.replace(/\D/g, '') }))}
+                    style={{ letterSpacing: 4, fontWeight: 700, textAlign: 'center', fontSize: '1.1rem' }}
+                    required
+                  />
+                </div>
+
+                <button className="btn btn-teal btn-lg w-full" type="submit" disabled={contactModal.loading} style={{ justifyContent: 'center' }}>
+                  {contactModal.loading ? 'Verifying Code...' : `Verify Code & Update ${contactModal.type === 'email' ? 'Email' : 'Phone'}`}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* CIRCULAR IMAGE CROP MODAL */}
       {showCropModal && (
         <div
           className="fade-in"
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.88)',
             zIndex: 9999,
             display: 'flex',
@@ -839,7 +1159,6 @@ export default function Profile() {
               🖐️ Drag/touch photo to position inside circle. Use slider below to zoom in or out.
             </div>
 
-            {/* Circular Crop Frame Container */}
             <div
               onMouseDown={handlePointerDown}
               onMouseMove={handlePointerMove}
@@ -884,7 +1203,6 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Zoom Control Slider */}
             <div style={{ width: '100%', maxWidth: 300, marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--teal-300)', marginBottom: 8, alignItems: 'center' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><ZoomOut size={14} /> Zoom Out</span>
@@ -902,7 +1220,6 @@ export default function Profile() {
               />
             </div>
 
-            {/* Action Buttons */}
             <div style={{ display: 'flex', gap: 12, width: '100%', justifyContent: 'flex-end' }}>
               <button
                 type="button"
