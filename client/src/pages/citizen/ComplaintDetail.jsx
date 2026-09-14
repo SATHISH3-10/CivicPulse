@@ -60,8 +60,33 @@ export default function ComplaintDetail() {
           const color = data.complaint.status === 'resolved' ? '#059669' : data.complaint.priority === 'P1' ? '#DC2626' : '#EA580C';
           const customIcon = L.default.divIcon({
             className: '',
-            html: `<div style="width:18px;height:18px;border-radius:50%;background:${color};border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
-            iconSize: [18, 18]
+            html: `
+              <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  background: ${color};
+                  border: 2.5px solid #ffffff;
+                  border-radius: 50% 50% 50% 0;
+                  transform: rotate(-45deg);
+                  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                ">
+                  <div style="
+                    width: 10px;
+                    height: 10px;
+                    background: #ffffff;
+                    border-radius: 50%;
+                    transform: rotate(45deg);
+                  "></div>
+                </div>
+              </div>
+            `,
+            iconSize: [34, 34],
+            iconAnchor: [17, 34],
+            popupAnchor: [0, -34]
           });
 
           L.default.marker([latitude, longitude], { icon: customIcon }).addTo(map)

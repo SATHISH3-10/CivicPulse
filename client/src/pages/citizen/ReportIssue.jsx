@@ -189,10 +189,41 @@ export default function ReportIssue() {
 
   function updateMarker(lat, lng) {
     import('leaflet').then(L => {
+      const pinIcon = L.default.divIcon({
+        className: '',
+        html: `
+          <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+            <div style="
+              width: 32px;
+              height: 32px;
+              background: linear-gradient(135deg, #00B4D8 0%, #0077B6 100%);
+              border: 2.5px solid #ffffff;
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">
+              <div style="
+                width: 10px;
+                height: 10px;
+                background: #ffffff;
+                border-radius: 50%;
+                transform: rotate(45deg);
+              "></div>
+            </div>
+          </div>
+        `,
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -34]
+      });
+
       if (markerRef.current) {
         markerRef.current.setLatLng([lat, lng]);
       } else if (mapInstance.current) {
-        markerRef.current = L.default.marker([lat, lng], { draggable: true }).addTo(mapInstance.current);
+        markerRef.current = L.default.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(mapInstance.current);
         markerRef.current.on('dragend', () => {
           const pos = markerRef.current.getLatLng();
           setLocation({ lat: pos.lat, lng: pos.lng, address: `${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)}` });

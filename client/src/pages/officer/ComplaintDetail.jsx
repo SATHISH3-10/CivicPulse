@@ -45,8 +45,39 @@ export default function OfficerComplaintDetail() {
 
         try {
           const map = L.default.map(mapRef.current).setView([latitude, longitude], 15);
-          L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
-          L.default.marker([latitude, longitude]).addTo(map);
+          const pinIcon = L.default.divIcon({
+            className: '',
+            html: `
+              <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+                  border: 2.5px solid #ffffff;
+                  border-radius: 50% 50% 50% 0;
+                  transform: rotate(-45deg);
+                  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                ">
+                  <div style="
+                    width: 10px;
+                    height: 10px;
+                    background: #ffffff;
+                    border-radius: 50%;
+                    transform: rotate(45deg);
+                  "></div>
+                </div>
+              </div>
+            `,
+            iconSize: [34, 34],
+            iconAnchor: [17, 34],
+            popupAnchor: [0, -34]
+          });
+          L.default.marker([latitude, longitude], { icon: pinIcon }).addTo(map)
+            .bindPopup(`<strong>${data.complaint.complaintId}</strong><br/>${data.complaint.title}<br/>📍 ${data.complaint.address || ''}`)
+            .openPopup();
           mapInstance.current = map;
         } catch (err) {
           console.warn('Map initialization warning:', err);
