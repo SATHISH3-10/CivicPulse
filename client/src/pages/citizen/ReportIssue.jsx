@@ -76,7 +76,7 @@ export default function ReportIssue() {
 
     const geoOptions = {
       enableHighAccuracy: true,
-      timeout: 8000,
+      timeout: 10000,
       maximumAge: 0
     };
 
@@ -90,17 +90,17 @@ export default function ReportIssue() {
         });
 
         if (mapInstance.current) {
-          mapInstance.current.setView([latitude, longitude], 16);
+          mapInstance.current.setView([latitude, longitude], 17);
           updateMarker(latitude, longitude);
         }
         reverseGeocode(latitude, longitude);
         setLocating(false);
-        addToast(`Location acquired (accuracy: ~${Math.round(accuracy || 10)}m)`, 'success');
+        addToast(`Live GPS acquired (~${Math.round(accuracy || 10)}m accuracy)`, 'success');
       },
       (err) => {
         setLocating(false);
         if (err.code === 1) { // PERMISSION_DENIED
-          addToast('Location permission blocked by browser. Placed pin on Chennai City Center — drag pin or search address below.', 'warning');
+          addToast('Location permission blocked by browser. Drag pin on map or search address below.', 'warning');
           setFallbackLocation();
         } else {
           // Fallback retry with lower accuracy (Cell tower/Wi-Fi positioning)
@@ -109,13 +109,14 @@ export default function ReportIssue() {
               const { latitude, longitude } = fallbackPos.coords;
               setLocation({ lat: latitude, lng: longitude, address: `${latitude.toFixed(4)}, ${longitude.toFixed(4)}` });
               if (mapInstance.current) {
-                mapInstance.current.setView([latitude, longitude], 15);
+                mapInstance.current.setView([latitude, longitude], 16);
                 updateMarker(latitude, longitude);
               }
               reverseGeocode(latitude, longitude);
+              addToast('Approximate location pinned. You can drag pin to exact spot.', 'info');
             },
             () => {
-              addToast('Could not auto-detect GPS. Placed pin on Chennai City Center — search address or drag pin.', 'warning');
+              addToast('Could not auto-detect GPS. Placed default pin — search address or drag pin.', 'warning');
               setFallbackLocation();
             },
             { enableHighAccuracy: false, timeout: 5000 }
@@ -154,14 +155,12 @@ export default function ReportIssue() {
 
   async function searchAddress(e) {
     if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
+    const queryStr = searchQuery.trim();
+    if (!queryStr) return;
 
     setSearchingAddress(true);
     try {
-      const query = searchQuery.includes('Chennai') || searchQuery.includes('Tamil Nadu') 
-        ? searchQuery 
-        : `${searchQuery}, Chennai`;
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`, {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryStr)}`, {
         headers: { 'Accept-Language': 'en' }
       });
       const data = await res.json();
@@ -174,7 +173,7 @@ export default function ReportIssue() {
 
         setLocation({ lat, lng, address });
         if (mapInstance.current) {
-          mapInstance.current.setView([lat, lng], 16);
+          mapInstance.current.setView([lat, lng], 17);
           updateMarker(lat, lng);
         }
         addToast(`Found: ${address}`, 'success');
@@ -206,7 +205,9 @@ export default function ReportIssue() {
   useEffect(() => {
     if (step === 2 && mapRef.current && !mapInstance.current) {
       import('leaflet').then(L => {
-        const map = L.default.map(mapRef.current).setView([13.0827, 80.2707], 13);
+        const initialLat = location.lat || 13.0827;
+        const initialLng = location.lng || 80.2707;
+        const map = L.default.map(mapRef.current).setView([initialLat, initialLng], location.lat ? 17 : 13);
         L.default.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           attribution: '© OpenStreetMap'
         }).addTo(map);
@@ -219,7 +220,12 @@ export default function ReportIssue() {
         });
 
         mapInstance.current = map;
-        if (location.lat) { map.setView([location.lat, location.lng], 16); updateMarker(location.lat, location.lng); }
+        if (location.lat) {
+          map.setView([location.lat, location.lng], 17);
+          updateMarker(location.lat, location.lng);
+        } else {
+          getCurrentLocation();
+        }
       });
     }
     return () => { if (step !== 2 && mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; markerRef.current = null; } };
@@ -435,7 +441,17 @@ export default function ReportIssue() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: '0.875rem', background: 'var(--gray-50)', padding: 16, borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-200)' }}>
               <div><span style={{ color: 'var(--gray-500)' }}>Latitude:</span> <strong>{location.lat?.toFixed(6)}</strong></div>
               <div><span style={{ color: 'var(--gray-500)' }}>Longitude:</span> <strong>{location.lng?.toFixed(6)}</strong></div>
-              <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--gray-500)' }}>Tagged Address:</span> <strong>{location.address || 'Location Pinned'}</strong></div>
+              <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <div><span style={{ color: 'var(--gray-500)' }}>Tagged Address:</span> <strong>{location.address || 'Location Pinned'}</strong></div>
+                <a
+                  href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.8rem', color: 'var(--teal-600)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}
+                >
+                  <MapPin size={14} /> Open in Google Maps ↗
+                </a>
+              </div>
             </div>
           )}
         </div>

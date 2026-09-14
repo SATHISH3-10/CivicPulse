@@ -153,7 +153,20 @@ export default function OfficerComplaintDetail() {
         </div>
         <p style={{ color: 'var(--gray-600)', fontSize: '0.875rem', marginBottom: 12 }}>{complaint.description}</p>
         <div style={{ fontSize: '0.875rem', color: 'var(--gray-500)' }}>
-          <div>📍 {complaint.address || `${complaint.latitude}, ${complaint.longitude}`}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+            <span>📍 {complaint.address || `${complaint.latitude}, ${complaint.longitude}`}</span>
+            {complaint.latitude && complaint.longitude && (
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${complaint.latitude},${complaint.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-teal btn-sm"
+                style={{ padding: '2px 8px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                <MapPin size={13} /> Navigate on Google Maps ↗
+              </a>
+            )}
+          </div>
           <div>👤 Reported by: {complaint.citizenId?.name || 'Citizen'}</div>
           <div>🏢 {complaint.departmentId?.name || 'N/A'}</div>
           {complaint.officerId && <div>🔧 Assigned Officer: {complaint.officerId.name}</div>}
@@ -250,7 +263,20 @@ export default function OfficerComplaintDetail() {
 
       {/* Map */}
       <div className="card" style={{ marginBottom: 16 }}>
-        <h4 style={{ marginBottom: 12, fontSize: '0.875rem' }}>Location</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <h4 style={{ margin: 0, fontSize: '0.875rem' }}>Location Map & Directions</h4>
+          {complaint.latitude && complaint.longitude && (
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${complaint.latitude},${complaint.longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-teal btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+            >
+              <Navigation size={14} /> Open Navigation on Google Maps ↗
+            </a>
+          )}
+        </div>
         <div ref={mapRef} style={{ height: 250, borderRadius: 'var(--radius-md)', overflow: 'hidden' }} />
       </div>
 

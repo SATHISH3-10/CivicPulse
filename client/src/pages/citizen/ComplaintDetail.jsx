@@ -161,14 +161,26 @@ export default function ComplaintDetail() {
 
       {/* Exact Map Location Section */}
       <div className="card" style={{ marginBottom: 20, padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 6 }}>
             <MapPin size={16} style={{ color: 'var(--teal-600)' }} />
             Exact Problem Location on Map
           </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
-            GPS: {complaint.latitude?.toFixed(4)}, {complaint.longitude?.toFixed(4)}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--gray-500)' }}>
+              GPS: {complaint.latitude?.toFixed(4)}, {complaint.longitude?.toFixed(4)}
+            </span>
+            {complaint.latitude && complaint.longitude && (
+              <a
+                href={`https://www.google.com/maps?q=${complaint.latitude},${complaint.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: '0.8rem', color: 'var(--teal-600)', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                Google Maps ↗
+              </a>
+            )}
+          </div>
         </div>
         <div ref={mapRef} style={{ height: 280, width: '100%' }} />
       </div>
