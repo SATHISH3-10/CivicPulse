@@ -16,7 +16,14 @@ export default function VoiceInput({ onTranscription, onCategoryDetect }) {
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    let recognition;
+    try {
+      recognition = new SpeechRecognition();
+    } catch (err) {
+      console.warn('SpeechRecognition constructor failed:', err);
+      setSupported(false);
+      return;
+    }
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = lang === 'ta' ? 'ta-IN' : 'en-IN';

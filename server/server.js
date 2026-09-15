@@ -12,6 +12,7 @@ import officerRoutes from './routes/officer.js';
 import adminRoutes from './routes/admin.js';
 import aiRoutes from './routes/ai.js';
 import notificationRoutes from './routes/notifications.js';
+import contactRoutes from './routes/contact.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,6 +39,7 @@ app.use('/api/officer', officerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/contact', contactRoutes);
 
 // Auth callback fallback for direct backend hits
 app.get('/auth/callback', (req, res) => {

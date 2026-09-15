@@ -41,8 +41,11 @@ export default function Login() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  const [oauthAlert, setOauthAlert] = useState('');
+
   async function performLogin(email, password) {
     setLoading(true);
+    setOauthAlert('');
     try {
       const loggedUser = await login(email, password);
       addToast(`Welcome back, ${loggedUser.name}!`, 'success');
@@ -54,7 +57,12 @@ export default function Login() {
         navigate(target, { replace: true });
       }
     } catch (err) {
-      addToast(err.response?.data?.error || err.message || 'Invalid email or password', 'error');
+      const errorMsg = err.response?.data?.error || err.message || 'Invalid email or password';
+      if (errorMsg.includes('Google')) {
+        setOauthAlert(errorMsg);
+      } else {
+        addToast(errorMsg, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -95,6 +103,9 @@ export default function Login() {
         method: forgotForm.method
       });
       addToast(res.data.message || 'Verification code sent!', 'success');
+      if (res.data.otp) {
+        setForgotForm(prev => ({ ...prev, otp: res.data.otp }));
+      }
       setForgotStep(2);
     } catch (err) {
       addToast(err.response?.data?.error || err.message || 'Failed to send OTP code', 'error');
@@ -186,6 +197,32 @@ export default function Login() {
             Continue with Google
           </button>
         </div>
+
+        {/* OAuth-Only Account Notification Banner */}
+        {oauthAlert && (
+          <div className="fade-in" style={{ background: '#fef3c7', border: '1px solid #fde68a', color: '#92400e', padding: '14px 16px', borderRadius: 'var(--radius-md)', marginBottom: 20, fontSize: '0.85rem' }}>
+            <div style={{ fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>🌐</span> Google Sign-In Account Detected
+            </div>
+            <div>{oauthAlert}</div>
+            <button
+              type="button"
+              className="btn btn-teal btn-sm w-full"
+              style={{ marginTop: 12, justifyContent: 'center', gap: 8, fontWeight: 700 }}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await signInWithGoogleOAuth();
+                } catch (e) {
+                  addToast(e.message || 'Google OAuth failed', 'error');
+                  setLoading(false);
+                }
+              }}
+            >
+              Continue with Google
+            </button>
+          </div>
+        )}
 
         {/* Standard Email/Password Form */}
         <form onSubmit={handleSubmit}>

@@ -453,8 +453,11 @@ export async function requestForgotPasswordOTP(req, res) {
 
     const result = await generateOTP(cleanContact, 'password_reset');
     res.json({
-      message: `Verification code (OTP) sent successfully to your ${isEmail ? 'email' : 'phone number'}.`,
-      contact: cleanContact
+      message: result.emailSent
+        ? `Verification code (OTP) sent successfully to your email address (${cleanContact}).`
+        : `Verification code (OTP) generated: ${result.otp} — Enter this code in the field below to reset your password.`,
+      contact: cleanContact,
+      otp: result.emailSent ? undefined : result.otp
     });
   } catch (error) {
     console.error('Forgot password OTP error:', error);

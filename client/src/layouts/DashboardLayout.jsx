@@ -9,7 +9,7 @@ import { getHDAvatarUrl } from '../lib/avatar.js';
 import {
   LayoutDashboard, FileText, MapPin, PlusCircle, Bell, LogOut,
   Menu, X, User, Settings, BarChart3, Users, Building2, AlertTriangle,
-  Map, Flame, ClipboardList, CheckCheck, UserCheck
+  Map, Flame, ClipboardList, CheckCheck, UserCheck, MessageSquare
 } from 'lucide-react';
 import MobileBottomNav from '../components/MobileBottomNav.jsx';
 
@@ -29,6 +29,7 @@ const navigationByRole = {
     { to: '/admin', icon: LayoutDashboard, label: 'Command Center', exact: true },
     { to: '/admin/users', icon: Users, label: 'Users & Team' },
     { to: '/admin/complaints', icon: FileText, label: 'All Complaints' },
+    { to: '/admin/feedback', icon: MessageSquare, label: 'User Feedback' },
     { to: '/admin/map', icon: Map, label: 'Live Map' },
     { to: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/admin/departments', icon: Building2, label: 'Departments' },

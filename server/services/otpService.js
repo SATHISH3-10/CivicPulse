@@ -90,9 +90,15 @@ export async function generateOTP(contact, purpose = 'general') {
     }
   }
 
+  const emailSent = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && cleanContact.includes('@'));
+
   return {
     success: true,
-    message: `Verification code sent to ${cleanContact}`
+    otp,
+    emailSent,
+    message: emailSent
+      ? `Verification code sent to ${cleanContact}`
+      : `Verification code generated: ${otp} (Enter this code to proceed)`
   };
 }
 

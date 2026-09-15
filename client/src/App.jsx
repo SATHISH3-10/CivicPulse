@@ -32,6 +32,7 @@ import AdminAnalytics from './pages/admin/Analytics.jsx';
 import AdminDepartments from './pages/admin/Departments.jsx';
 import AdminHotspots from './pages/admin/Hotspots.jsx';
 import AdminUsers from './pages/admin/Users.jsx';
+import AdminFeedback from './pages/admin/Feedback.jsx';
 
 // Public Information Pages
 import Contact from './pages/Contact.jsx';
@@ -132,6 +133,7 @@ export default function App() {
                 <Route path="hotspots" element={<AdminHotspots />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="officers" element={<AdminUsers />} />
+                <Route path="feedback" element={<AdminFeedback />} />
                 <Route path="profile" element={<Profile />} />
               </Route>
 

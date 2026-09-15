@@ -1,22 +1,33 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Send, ArrowLeft, Shield, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, ArrowLeft, Shield, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatIndianPhone } from '../components/shared.jsx';
+import api from '../services/api.js';
 
 export default function Contact() {
   const { addToast } = useToast();
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.email || !form.message) {
       addToast('Please fill in your name, email, and message', 'warning');
       return;
     }
-    setSubmitted(true);
-    addToast('Thank you for contacting CivicPulse AI! Your message has been received.', 'success');
+    try {
+      setSubmitting(true);
+      const res = await api.post('/contact/submit', form);
+      setSubmitted(true);
+      addToast(res.data.message || 'Thank you! Your message has been sent to municipal support and the admin team.', 'success');
+    } catch (err) {
+      console.error('Contact submission error:', err);
+      addToast(err.response?.data?.error || 'Failed to send message. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -136,8 +147,16 @@ export default function Contact() {
                   <textarea className="form-control" rows={4} placeholder="Describe your question or feedback..." value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} required />
                 </div>
 
-                <button type="submit" className="btn btn-teal btn-lg" style={{ justifyContent: 'center', gap: 8, marginTop: 4 }}>
-                  <Send size={16} /> Submit Inquiry
+                <button type="submit" className="btn btn-teal btn-lg" disabled={submitting} style={{ justifyContent: 'center', gap: 8, marginTop: 4 }}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} /> Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} /> Submit Inquiry
+                    </>
+                  )}
                 </button>
               </form>
             )}

@@ -156,7 +156,7 @@ export default function Profile() {
   function handleApplyCrop() {
     if (!rawImageForCrop) return;
 
-    const img = new Image();
+    const img = new window.Image();
     img.src = rawImageForCrop;
     img.onload = () => {
       const CANVAS_SIZE = 800;
@@ -807,9 +807,37 @@ export default function Profile() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
                 <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" htmlFor="profile-newpass">
-                    {user?.hasPassword ? 'New Password' : 'Create New Password'}
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label className="form-label" htmlFor="profile-newpass" style={{ margin: 0 }}>
+                      {user?.hasPassword ? 'New Password' : 'Create New Password'}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
+                        let pass = '';
+                        for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                        setPassForm(prev => ({ ...prev, newPassword: pass, confirmPassword: pass }));
+                        setShowNewPass(true);
+                        addToast('Strong password generated! You can copy or customize it.', 'info');
+                      }}
+                      style={{
+                        background: 'var(--teal-50)',
+                        border: '1px solid var(--teal-300)',
+                        color: 'var(--teal-800)',
+                        borderRadius: 'var(--radius-sm)',
+                        padding: '2px 8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      <Sparkles size={12} /> Generate Password
+                    </button>
+                  </div>
                   <div style={{ position: 'relative' }}>
                     <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
                     <input
